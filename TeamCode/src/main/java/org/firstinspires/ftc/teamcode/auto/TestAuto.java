@@ -7,7 +7,6 @@ import com.qualcomm.hardware.bosch.BHI260IMU;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import org.firstinspires.ftc.teamcode.hardware.Robot;
 
@@ -15,7 +14,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
 @Config
 @Autonomous
-public class jonathanAutoBase extends LinearOpMode {
+public class TestAuto extends LinearOpMode {
     // PID constants for turning
     public  static double turnKp = 0.1;
     public  static double turnKi = 0.01;
@@ -48,7 +47,7 @@ public class jonathanAutoBase extends LinearOpMode {
      public DcMotorEx rightFront = null;
      public DcMotorEx rightBack = null;
 
-     public BHI260IMU imu = null;
+     public BHI260IMU the_imu = null;
 
 
     //Vars
@@ -71,7 +70,7 @@ public class jonathanAutoBase extends LinearOpMode {
     Robot Robot = new Robot(hardwareMap);
 
 
-    public void AutonInit(HardwareMap hardwareMap){
+    public void AutonInit(){
         leftFront = Robot.leftFront;
         leftBack = Robot.leftBack;
         rightFront = Robot.rightFront;
@@ -83,8 +82,8 @@ public class jonathanAutoBase extends LinearOpMode {
         rightBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
 
-        imu = hardwareMap.get(BHI260IMU.class,"imu");
-        imu.resetYaw();
+        the_imu = hardwareMap.get(BHI260IMU.class,"imu");
+        the_imu.resetYaw();
 
         //Assumed that your encoders are plugged into specific motor ports
         leftFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -118,10 +117,10 @@ public class jonathanAutoBase extends LinearOpMode {
 
     //functions start here ----- (っ＾▿＾)۶🍸🌟🍺٩(˘◡˘ )
     public double getHeading(){
-       return  imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+       return  the_imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
     }
 
-    private double previousError, integral;
+    //private double previousError, integral;
 
     public void robot_turn(double degrees, double maxPower) {
 
@@ -143,7 +142,7 @@ public class jonathanAutoBase extends LinearOpMode {
             setLeftMotorPower(-output);
             setRightMotorPower(output);
 
-            previousError = error;
+            turn_previousError = error;
         }
         // Stop motors after turning
         setLeftMotorPower(0);
@@ -151,10 +150,9 @@ public class jonathanAutoBase extends LinearOpMode {
 
         //reset variables
 
-        previousError = 0;
-        integral = 0;
+        turn_previousError = 0;
+        turn_integral = 0;
     }
-
 
     public void robot_move(double distance, double maxPower) {
         double targetDistanceTicks = distance * encoder_tick_scale;
@@ -312,9 +310,23 @@ public class jonathanAutoBase extends LinearOpMode {
     }
 
 
+
+
     @Override
     public void runOpMode() throws InterruptedException {
         // 359 AUTON FUNCTIONS!!!! ೭੧(❛〜❛✿)੭೨
+        while (opModeInInit() ){
+            AutonInit();
+        }
+        if (opModeIsActive()){
+            robot_turn(90, 0.75);
+            sleep(2000);
+            robot_turn(45, 0.75);
+            sleep(2000);
+            robot_turn(-45, 0.75);
+            sleep(2000);
+            robot_turn(-90, 0.75);
+        }
 
 // TUNING GUIDE HERE
 // for tuning pid functions, run these programs and tune in this order:
@@ -324,13 +336,13 @@ public class jonathanAutoBase extends LinearOpMode {
         //turn tuning, make sure robot ends up in same starting orientation
         //tune turnKp, turnKi, turnKd (PID values for turning)
 
-        robot_turn(90, 0.75);
-        sleep(2000);
-        robot_turn(45, 0.75);
-        sleep(2000);
-        robot_turn(-45, 0.75);
-        sleep(2000);
-        robot_turn(-90, 0.75);
+//        robot_turn(90, 0.75);
+//        sleep(2000);
+//        robot_turn(45, 0.75);
+//        sleep(2000);
+//        robot_turn(-45, 0.75);
+//        sleep(2000);
+//        robot_turn(-90, 0.75);
 
         //forward backwards tuning, making sure robot ends up 6 inches from starting position
         //tune Kp_dist, Ki_dist, Kd_dist (PID values for forwards and backwards)

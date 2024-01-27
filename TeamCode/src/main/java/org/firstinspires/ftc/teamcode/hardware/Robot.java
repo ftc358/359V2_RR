@@ -24,8 +24,8 @@ public class Robot {
     ////Electronics:
     public static DcMotorEx leftFront;
     public static DcMotorEx leftBack;
-    public DcMotorEx rightFront;
-    public DcMotorEx rightBack; //Drivetrain Motors
+    public static DcMotorEx rightFront;
+    public static DcMotorEx rightBack; //Drivetrain Motors
     public DcMotorEx lift;
     public DcMotorEx horExt;
     public DcMotorEx intake;
@@ -43,7 +43,7 @@ public class Robot {
     public RevBlinkinLedDriver led;
 
     ////Sensors:
-    public BHI260IMU imu;//IMU on Control Hub
+    public static BHI260IMU imu;//IMU on Control Hub
     public AnalogInput diffy1Enc, diffy2Enc, intakePivot1Enc, intakePivot2Enc; //Axon Encoder Readouts
     public ColorRangeSensor In1Color, In2Color; //Color Sensors for Intake
     public DistanceSensor frontDistance;
