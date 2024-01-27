@@ -160,28 +160,6 @@ public class TestAuto extends LinearOpMode {
     }
 
 
-    public void AutonInit(){
-        leftFront = the_Robot.leftFront;
-        leftBack = the_Robot.leftBack;
-        rightFront = the_Robot.rightFront;
-        rightBack = the_Robot.rightBack;
-
-        leftFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        leftBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        rightFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        rightBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
-
-        //the_imu = the_Robot.imu;
-        //the_imu.resetYaw();
-
-        //Assumed that your encoders are plugged into specific motor ports
-        leftFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        leftBack.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        rightFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        rightBack.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-    }
-
 
     //motor control functions ----- ( ๑‾̀◡‾́)σ"
     public void setLeftMotorPower(double power) {
