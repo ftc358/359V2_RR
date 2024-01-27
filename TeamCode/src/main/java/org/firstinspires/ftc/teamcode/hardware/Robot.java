@@ -3,7 +3,9 @@ package org.firstinspires.ftc.teamcode.hardware;
 import com.qualcomm.hardware.bosch.BHI260IMU;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
+import com.qualcomm.hardware.rev.RevColorSensorV3;
 import com.qualcomm.robotcore.hardware.AnalogInput;
+import com.qualcomm.robotcore.hardware.ColorRangeSensor;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -20,8 +22,14 @@ public class Robot {
     //Hardware Declaration
 
     ////Electronics:
-    public DcMotorEx leftFront,leftBack,rightFront,rightBack; //Drivetrain Motors
-    public DcMotorEx lift,horExt,intake,climb; //Accessory Motors
+    public static DcMotorEx leftFront;
+    public static DcMotorEx leftBack;
+    public DcMotorEx rightFront;
+    public DcMotorEx rightBack; //Drivetrain Motors
+    public DcMotorEx lift;
+    public DcMotorEx horExt;
+    public DcMotorEx intake;
+    public static DcMotorEx climb; //Accessory Motors
     public static Servo diffy1;
     public static Servo diffy2;
     public static Servo wrist1;
@@ -37,7 +45,7 @@ public class Robot {
     ////Sensors:
     public BHI260IMU imu;//IMU on Control Hub
     public AnalogInput diffy1Enc, diffy2Enc, intakePivot1Enc, intakePivot2Enc; //Axon Encoder Readouts
-    public ColorSensor In1Color, In2Color; //Color Sensors for Intake
+    public ColorRangeSensor In1Color, In2Color; //Color Sensors for Intake
     public DistanceSensor frontDistance;
     public DistanceSensor backDistance; //Possible Front or Back Distance Sensors
     public TouchSensor outtakeTouch, liftReset, intakeReset, horReset;
@@ -71,6 +79,7 @@ public class Robot {
 
         //Fetch Accessory Motors
         lift = hardwareMap.get(DcMotorEx.class,"lift");
+        lift.setDirection(DcMotorSimple.Direction.REVERSE);
         horExt = hardwareMap.get(DcMotorEx.class,"horExt");
         intake = hardwareMap.get(DcMotorEx.class,"intake");
         climb = hardwareMap.get(DcMotorEx.class,"climb");
@@ -79,6 +88,7 @@ public class Robot {
         horExt.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         climb.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
 
         //Fetch Servos in the Future Here when Installed;
         diffy1 = hardwareMap.get(Servo.class,"diffy1");
@@ -107,8 +117,8 @@ public class Robot {
 
         //Fetch Sensors
         imu = hardwareMap.get(BHI260IMU.class,"imu");
-        In1Color = hardwareMap.get(ColorSensor.class,"In1Color");
-        In2Color = hardwareMap.get(ColorSensor.class,"In2Color");
+        In1Color = hardwareMap.get(RevColorSensorV3.class,"In1Color");
+        In2Color = hardwareMap.get(RevColorSensorV3.class,"In2Color");
         backDistance = hardwareMap.get(DistanceSensor.class,"backDistance");
         outtakeTouch = hardwareMap.get(TouchSensor.class,"outtakeTouch");
         horReset = hardwareMap.get(TouchSensor.class,"horReset");

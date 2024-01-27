@@ -11,6 +11,7 @@ import com.qualcomm.robotcore.hardware.Gamepad;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.hardware.Robot;
 import org.firstinspires.ftc.teamcode.threadopmode.*;
+
 @TeleOp(name="LibrA+ TeleOP 2.0a", group="TeleOP")
 
 public class ILT_TeleOP extends ThreadOpMode{
@@ -38,7 +39,6 @@ public class ILT_TeleOP extends ThreadOpMode{
     private double intakeWrist = 0;
     private double intakePivot = 0;
     //Vars for Led Thread
-    private int ledPattern = 0;
     private RevBlinkinLedDriver.BlinkinPattern currentPattern = RevBlinkinLedDriver.BlinkinPattern.WHITE;
     private RevBlinkinLedDriver.BlinkinPattern previousPattern = RevBlinkinLedDriver.BlinkinPattern.WHITE;
 
@@ -48,9 +48,20 @@ public class ILT_TeleOP extends ThreadOpMode{
 
     private int intakeTransfer = 0;
     long halt0, halt1, halt2, halt3, halt4, halt5;
-    private boolean skiing = false;
+    private boolean intakeIn = false;
+    private boolean intakeOut = false;
+    private boolean liftBypass = false;
 
-    private boolean desire;
+    private boolean retractVfy;
+    private boolean detect;
+
+    double In1Distance, In2Distance;
+    int ledState = 0;
+    String color;
+
+    boolean blocked = false;
+
+
 
 
 
@@ -62,9 +73,9 @@ public class ILT_TeleOP extends ThreadOpMode{
             @Override
             public void loop() {
                 //Mecanum Drive Code From https://www.youtube.com/watch?v=gnSW2QpkGXQ
-                x = currentGamepad1.left_stick_x;
-                y = -currentGamepad1.left_stick_y;
-                turn = currentGamepad1.right_stick_x*turnScale;
+                x = gamepad1.left_stick_x;
+                y = -gamepad1.left_stick_y;
+                turn = gamepad1.right_stick_x*turnScale;
                 theta = Math.atan2(y,x);
                 power = Math.hypot(x,y)*powerScale;
 
@@ -97,6 +108,22 @@ public class ILT_TeleOP extends ThreadOpMode{
             public void loop() {
                 backDistanceIN = Robot.backDistance.getDistance(DistanceUnit.INCH);
                 horExtRetract = Robot.horReset.isPressed();
+
+                In1Distance = Robot.In1Color.getDistance(DistanceUnit.INCH);
+                In2Distance = Robot.In2Color.getDistance(DistanceUnit.INCH);
+
+
+                if (detect){//Intake Pixel Detection
+                if (In1Distance <1.4 && In2Distance<1.4){
+                    ledState = 2;
+                }
+                else if (In1Distance < 1.4 || In2Distance <1.4){
+                    ledState = 1;
+                }else {
+                    ledState = 0;
+                }
+                }
+
             }
         });
 
@@ -104,45 +131,56 @@ public class ILT_TeleOP extends ThreadOpMode{
             @Override
             public void loop() {
                 //Horizontal Extension Triggering
-                if ((currentGamepad2.left_trigger>0.2)){
-                    desire = false;
+                if (!retractVfy && diffyState == 2){
+                    horExtPwr = -1;
+                }
+                else if ((currentGamepad2.left_trigger>0.2)){
+                    retractVfy = false;
                     horExtPwr = currentGamepad2.left_trigger;
+                    if (diffyState ==0){
+                        diffyState =1;
+                    }
 
                 }
                 else if (currentGamepad2.left_bumper && !horExtRetract){
-                    desire = false;
+                    retractVfy = false;
                     horExtPwr = -1;
                 }else if (currentGamepad2.left_bumper)
                 {
-                    desire = false;
+                    retractVfy = false;
                     horExtPwr = -0.2;
-                }else if (horExtRetract||desire){
-                    desire = true;
+                }else if (horExtRetract|| retractVfy){
+                    retractVfy = true;
                     horExtPwr = -0.2;
-                }else if (!desire){
+                }else if (!retractVfy){
                     horExtPwr = 0;
                 }else {
                     horExtPwr = 0;
                 }
 
                 //lift Trigerring
-                if (currentGamepad2.right_trigger>0.1){
+                if (liftBypass){
+                    liftPwr = 0.7;
+                }
+                else if (currentGamepad2.right_trigger>0.1){
                     liftPwr = currentGamepad2.right_trigger;
                 }else if (currentGamepad2.right_bumper){
-                    liftPwr = -1;
+                    liftPwr = -0.6;
                 }else{
-                    liftPwr = 0;
+                    liftPwr = 0.1;
                 }
 
-                if (currentGamepad2.left_trigger>0 || ((intakeTransfer == 1 || intakeTransfer ==2)&&!skiing)){
+
+
+
+                if ((currentGamepad2.left_trigger>0 || intakeIn)){
+
                     intakePwr = 1;
-                }else if (currentGamepad2.dpad_left || (wristState ==1)){
+                }else if ((currentGamepad2.dpad_left || intakeOut)){
                     intakePwr = -1;
                 }else{
                     intakePwr = 0;
                 }
-
-
 
                 //Set Power to Motor
                 Robot.horExt.setPower(horExtPwr);
@@ -157,53 +195,72 @@ public class ILT_TeleOP extends ThreadOpMode{
             public void loop() {
                 switch (diffyState){
                     case 0: //Home position for Driving
-                        wristState = 0;
+                        blocked = false;
+                        if (gamepad2.x){ledState = 6;
+                         wristState = 3;
+                        }else {
+                            ledState = 5;
+                            wristState = 0;
+                        }
                         intakeTransfer = 0;
                         break;
                     case 1:
                         intakeTransfer = 1;
-                        halt0 = 0;
+                        halt3 = 0;
+                        detect = true;
                         break;
                     case 2:
+                        ledState = 3;
+                        blocked = true;//Horzital Extension Reverses
+                        halt1 = 0;
+                        intakeIn = true;
                         intakeTransfer = 2;
-
-                        if (halt0 == 0){
-                            halt0 = System.currentTimeMillis();
+                        if (horExtRetract && (halt3 == 0)){
+                            halt3 = System.currentTimeMillis();
                         }
-                        if ((System.currentTimeMillis()-halt0)>800) {
+                        else if (horExtRetract && (System.currentTimeMillis()-halt3)>400){
                             diffyState = 3;
                         }
-                        halt1 = 0;
-
+                        halt0 = 0;
                         break;
                     case 3:
-                        wristState = 1;
-                        if (halt1 == 0){
+                        if (halt0 == 0){ //Intake goes up
+                            halt0 = System.currentTimeMillis();
+                        }
+                        if ((System.currentTimeMillis()-halt0)>400) {//Wrist goes up
+                            wristState = 1;
+                            diffyState = 4;
+                        }
+                        break;
+                    case 4: // GO back
+                        if (halt1 == 0){ //Intake Transfer
                             halt1 = System.currentTimeMillis();
                         }
-                        if ((System.currentTimeMillis()-halt1)>700) {
-                            skiing = true;
-                            diffyState = 4;
-
+                        if ((System.currentTimeMillis()-halt1)>500) {
+                            intakeIn = false;
+                            intakeOut = true;
+                            diffyState = 5;
                         }
                         halt2 = 0;
                         break;
-                    case 4:
-                        if (halt2 == 0){
+                    case 5:
+                        if (halt2 == 0){ //Retract and Arm
                             halt2 = System.currentTimeMillis();
                         }
-                        if ((System.currentTimeMillis()-halt2)>500) {
-                            skiing = false;
+                        if ((System.currentTimeMillis()-halt2)>400) {
+                            intakeOut = false;
                             wristState = 2;
-
+                            blocked = false;
                         }
                         break;
-                    case 5:
+                    case 6: //Ready to drop
+                        ledState = 4;
                         wristState = 3;
                         break;
-                    case 6:
-                        wristState = 4;
+                    case 7: //Drops here
+                        wristState = 4;//drops
                         intakeTransfer = 0;
+
                         break;
                 }
 
@@ -214,11 +271,11 @@ public class ILT_TeleOP extends ThreadOpMode{
                 switch (grabState){
                     case 0: //Not Grabbing
                         claw1Pos = clawReleasePos;
-                        claw2Pos = clawReleasePos;
+                        claw2Pos = claw2ReleasePos;
                         break;
                     case 1: //Grabbing
                         claw1Pos = clawGrabPos;
-                        claw2Pos = clawGrabPos;
+                        claw2Pos = claw2GrabPos;
                         break;
                 }
 
@@ -238,18 +295,22 @@ public class ILT_TeleOP extends ThreadOpMode{
                         break;
 
                     case 2: // Armed Position
-                        grabState = 1;
                         wristPos = wristHoldPos;
                         diffy1Pos = diffyHoldPos;
                         diffy2Pos = diffyHoldPos;
                         break;
 
                     case 3: //Dropping Position
+                        grabState = 1;
+
                         wristPos = wristDropPos+gamepad1.right_trigger*wristInvK_Scale;
                         diffy1Pos = diffyDropPos+gamepad1.right_trigger*diffyInvK_Scale;
                         diffy2Pos = diffyDropPos+gamepad1.right_trigger*diffyInvK_Scale;
                         break;
                     case 4: //Drops
+                        wristPos = wristDropPos+gamepad1.right_trigger*wristInvK_Scale;
+                        diffy1Pos = diffyDropPos+gamepad1.right_trigger*diffyInvK_Scale;
+                        diffy2Pos = diffyDropPos+gamepad1.right_trigger*diffyInvK_Scale;
                         grabState = 0;
                 }
 
@@ -284,61 +345,35 @@ public class ILT_TeleOP extends ThreadOpMode{
         TaskThread ledThread = new TaskThread(new TaskThread.Actions() {
             @Override
             public void loop() {
-                if (gamepad1.back){
-                    ledPattern = (ledPattern+1)%10;
-                }
-                switch (ledPattern){
-                    case 0:
-                        currentPattern = RevBlinkinLedDriver.BlinkinPattern.HEARTBEAT_WHITE;
 
+                switch (ledState){
+                    case 0://No Pixels esta en el intake;
+                        currentPattern = RevBlinkinLedDriver.BlinkinPattern.HEARTBEAT_RED;
                         break;
-                    case 1:
-                        currentPattern = RevBlinkinLedDriver.BlinkinPattern.STROBE_WHITE;
-
+                    case 1://Un pixel esta en el intake
+                        currentPattern = RevBlinkinLedDriver.BlinkinPattern.YELLOW;
                         break;
-                    case 2:
-                        currentPattern = RevBlinkinLedDriver.BlinkinPattern.AQUA;
-
-                        break;
-                    case 3:
-                        currentPattern = RevBlinkinLedDriver.BlinkinPattern.LARSON_SCANNER_RED;
-                        break;
-                    case 4:
-                        currentPattern = RevBlinkinLedDriver.BlinkinPattern.BEATS_PER_MINUTE_RAINBOW_PALETTE;
-
-                        break;
-                    case 5:
-                        currentPattern = RevBlinkinLedDriver.BlinkinPattern.BREATH_RED;
-
-                        break;
-                    case 6:
-                        currentPattern = RevBlinkinLedDriver.BlinkinPattern.LIGHT_CHASE_RED;
-
-                        break;
-                    case 7:
-                        currentPattern = RevBlinkinLedDriver.BlinkinPattern.LIGHT_CHASE_BLUE;
-
-                        break;
-                    case 8:
-                        currentPattern = RevBlinkinLedDriver.BlinkinPattern.STROBE_BLUE;
-
-                        break;
-                    case 9:
+                    case 2://Hay dos pixeles en el intake
                         currentPattern = RevBlinkinLedDriver.BlinkinPattern.VIOLET;
-
                         break;
-                    case 10:
-                        currentPattern = RevBlinkinLedDriver.BlinkinPattern.GREEN;
-
+                    case 3://Transfer In progress
+                        currentPattern = RevBlinkinLedDriver.BlinkinPattern.STROBE_BLUE;
                         break;
-
-
+                    case 4://Ready to droppy
+                        currentPattern = RevBlinkinLedDriver.BlinkinPattern.HEARTBEAT_BLUE;
+                        break;
+                    case 5: //Idle
+                        currentPattern = RevBlinkinLedDriver.BlinkinPattern.RAINBOW_RAINBOW_PALETTE;
+                        break;
+                    case 6://Climb
+                        currentPattern = RevBlinkinLedDriver.BlinkinPattern.CP1_BREATH_FAST;
                 }
 
                 if (!currentPattern.equals(previousPattern)){
                     Robot.led.setPattern(currentPattern);
                     previousPattern = currentPattern;
-                }
+                }//Reduces Calls
+
             }});
 
         TaskThread templateThread = new TaskThread(new TaskThread.Actions() {
@@ -358,19 +393,41 @@ public class ILT_TeleOP extends ThreadOpMode{
         currentGamepad1.copy(gamepad1);
         currentGamepad2.copy(gamepad2);
 
-        if (currentGamepad2.a && !previousGamepad2.a){
-            diffyState = (diffyState + 1)%7;}
+        if ((currentGamepad2.a && !previousGamepad2.a) && !blocked){
+            diffyState = (diffyState + 1)%8;}
+
+        if ((currentGamepad1.right_bumper && !previousGamepad1.right_bumper) && diffyState == 6) {
+            diffyState = 7;
+        }
+
+        if (gamepad2.x){
+            diffyState = 0;
+            ledState = 6;
+            Robot.climb.setPower(-gamepad2.right_stick_y);
+        }
 
 
 
+        telemetry.addData("diffyState",diffyState);
         telemetry.addData("grabState",grabState);
-        telemetry.addData("fuck", skiing);
-        telemetry.addData("halt1",halt1);
         telemetry.addData("wristState",wristState);
+
+
         telemetry.addData("intakepivot",gamepad1.left_trigger);//0.67
         telemetry.addData("intakeWrist",gamepad1.right_trigger);//0.70
         telemetry.addData("diffyPos",diffy1Pos);
         telemetry.addData("BackDistance Reading (in) ",backDistanceIN);
+
+        telemetry.addLine("Sensors");
+        telemetry.addData("In1Distance",In1Distance); // Anything within 1.3in counts as in
+        telemetry.addData("Color",color);
+
+        telemetry.addData("LiftPower",liftPwr);
+
+
+
+
+
         telemetry.update();
 
         previousGamepad1.copy(currentGamepad1);
