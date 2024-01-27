@@ -227,7 +227,7 @@ public class ILT_TeleOP extends ThreadOpMode{
                         if (halt0 == 0){ //Intake goes up
                             halt0 = System.currentTimeMillis();
                         }
-                        if ((System.currentTimeMillis()-halt0)>400) {//Wrist goes up
+                        if ((System.currentTimeMillis()-halt0)>600) {//Wrist goes up
                             wristState = 1;
                             diffyState = 4;
                         }
@@ -236,7 +236,7 @@ public class ILT_TeleOP extends ThreadOpMode{
                         if (halt1 == 0){ //Intake Transfer
                             halt1 = System.currentTimeMillis();
                         }
-                        if ((System.currentTimeMillis()-halt1)>500) {
+                        if ((System.currentTimeMillis()-halt1)>700) {
                             intakeIn = false;
                             intakeOut = true;
                             diffyState = 5;
@@ -247,7 +247,7 @@ public class ILT_TeleOP extends ThreadOpMode{
                         if (halt2 == 0){ //Retract and Arm
                             halt2 = System.currentTimeMillis();
                         }
-                        if ((System.currentTimeMillis()-halt2)>400) {
+                        if ((System.currentTimeMillis()-halt2)>700) {
                             intakeOut = false;
                             wristState = 2;
                             blocked = false;

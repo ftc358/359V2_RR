@@ -11,7 +11,7 @@ public class RobotConstants {
     public static double intakeWristDriving = 0.60;
     public static double intakePivotIntake = 0.06;
     public static double intakeWristIntake = 0;
-    public static double intakePivotTransfer = 0.67;
+    public static double intakePivotTransfer = 0.64;
     public static double intakeWristTransfer = 0.70;
 
     public static double diffyHoldPos = 0.07;
