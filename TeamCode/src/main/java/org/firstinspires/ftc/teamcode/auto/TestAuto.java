@@ -1,7 +1,5 @@
 package org.firstinspires.ftc.teamcode.auto;
 
-import static org.firstinspires.ftc.teamcode.hardware.Robot.imu;
-
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
@@ -50,7 +48,7 @@ public class TestAuto extends LinearOpMode {
      public DcMotorEx rightFront = null;
      public DcMotorEx rightBack = null;
 
-     public BHI260IMU the_imu = null;
+     public BHI260IMU imu = null;
 
 
     //Vars
@@ -68,6 +66,32 @@ public class TestAuto extends LinearOpMode {
 
     private double previousErrorHeading = 0; 	//dont touch (ㆆ_ㆆ)
     private double integralHeading = 0; 			//dont touch (ㆆ_ㆆ)
+
+
+    Robot the_Robot = new Robot(hardwareMap);
+
+
+    public void AutonInit(){
+        leftFront = the_Robot.leftFront;
+        leftBack = the_Robot.leftBack;
+        rightFront = the_Robot.rightFront;
+        rightBack = the_Robot.rightBack;
+
+        leftFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        leftBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+
+        //the_imu = the_Robot.imu;
+        //the_imu.resetYaw();
+
+        //Assumed that your encoders are plugged into specific motor ports
+        leftFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        leftBack.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightBack.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+    }
 
 
     //motor control functions ----- ( ๑‾̀◡‾́)σ"
@@ -92,9 +116,10 @@ public class TestAuto extends LinearOpMode {
     }
 
 
-    //functions start here ----- (っ＾▿＾)۶🍸🌟🍺٩(˘◡˘ )
+//    functions start here ----- (っ＾▿＾)۶🍸🌟🍺٩(˘◡˘ )
     public double getHeading(){
-       return  the_imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+       //return  the_imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+       return 30;
     }
 
     //private double previousError, integral;
@@ -320,17 +345,6 @@ public class TestAuto extends LinearOpMode {
             rightFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             rightBack.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        }
-        if (opModeIsActive()){
-            robot_turn(90, 0.75);
-            sleep(2000);
-            robot_turn(45, 0.75);
-            sleep(2000);
-            robot_turn(-45, 0.75);
-            sleep(2000);
-            robot_turn(-90, 0.75);
-        }
-
 // TUNING GUIDE HERE
 // for tuning pid functions, run these programs and tune in this order:
 // (make sure to also tune exit conditions found in the while loop for each function)
@@ -390,5 +404,6 @@ public class TestAuto extends LinearOpMode {
 
 
 
+        }
     }
 }

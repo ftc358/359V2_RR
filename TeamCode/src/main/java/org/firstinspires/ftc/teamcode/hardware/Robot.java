@@ -43,7 +43,7 @@ public class Robot {
     public RevBlinkinLedDriver led;
 
     ////Sensors:
-    public static BHI260IMU imu;//IMU on Control Hub
+    public BHI260IMU imu;//IMU on Control Hub
     public AnalogInput diffy1Enc, diffy2Enc, intakePivot1Enc, intakePivot2Enc; //Axon Encoder Readouts
     public ColorRangeSensor In1Color, In2Color; //Color Sensors for Intake
     public DistanceSensor frontDistance;
