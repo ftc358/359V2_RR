@@ -68,7 +68,96 @@ public class TestAuto extends LinearOpMode {
     private double integralHeading = 0; 			//dont touch (ㆆ_ㆆ)
 
 
-    Robot the_Robot = new Robot(hardwareMap);
+    @Override
+    public void runOpMode() throws InterruptedException {
+        // 359 AUTON FUNCTIONS!!!! ೭੧(❛〜❛✿)੭೨
+        while (opModeInInit() ){
+            leftFront = hardwareMap.get(DcMotorEx.class,"leftFront");
+            leftBack = hardwareMap.get(DcMotorEx.class,"leftBack");
+            rightFront = hardwareMap.get(DcMotorEx.class,"rightFront");
+            rightBack = hardwareMap.get(DcMotorEx.class,"rightBack");
+
+
+            leftFront.setDirection(DcMotorSimple.Direction.REVERSE);
+            leftBack.setDirection(DcMotorSimple.Direction.REVERSE);
+
+            leftFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            leftBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            rightFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            rightBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+
+
+            imu = hardwareMap.get(BHI260IMU.class,"imu");
+            imu.resetYaw();
+
+            //Assumed that your encoders are plugged into specific motor ports
+            leftFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            leftBack.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            rightFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            rightBack.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+// TUNING GUIDE HERE
+// for tuning pid functions, run these programs and tune in this order:
+// (make sure to also tune exit conditions found in the while loop for each function)
+// if the robot has issues going too fast or not having enough low speed power, change the max power setting in each function (the last float)
+
+            //turn tuning, make sure robot ends up in same starting orientation
+            //tune turnKp, turnKi, turnKd (PID values for turning)
+
+//        robot_turn(90, 0.75);
+//        sleep(2000);
+//        robot_turn(45, 0.75);
+//        sleep(2000);
+//        robot_turn(-45, 0.75);
+//        sleep(2000);
+//        robot_turn(-90, 0.75);
+
+            //forward backwards tuning, making sure robot ends up 6 inches from starting position
+            //tune Kp_dist, Ki_dist, Kd_dist (PID values for forwards and backwards)
+            //tune Kp_heading, Ki_heading, Kd_heading (PID values for holding heading)
+            //tune encoder_tick_scale
+
+//        robot_move(12, 0.75);
+//        sleep(2000);
+//        robot_move(-12, 0.75); //should be at same starting position here
+//        sleep(5000);
+//        robot_move(12, 0.75);
+//        sleep(2000);
+//        robot_move(-6, 0.75); //should end up 6 inches forward from starting position
+//
+//        //strafe tuning, make sure robot ends up 6 inches from starting position
+//        //tune Kp_strafe, Ki_strafe, Kd_strafe (PID values for strafing)
+//        //tune Kp_fb, Ki_fb, Kd_fb (PID values for minimizing forward and backward error)
+//        //double check Kp_heading, Ki_heading, Kd_heading
+//        //double check encoder tick scale
+//
+//        robot_strafe(12, 0.75);
+//        sleep(2000);
+//        robot_strafe(-12, 0.75); //should be at same starting position here
+//        sleep(5000);
+//        robot_strafe(12, 0.75);
+//        sleep(2000);
+//        robot_strafe(-6, 0.75); //should end up 6 inches forward from starting position
+//
+//        //double check tuning and make final adjustments
+//        robot_drive_point(12, 0, 0, 0.75); //forward 1 foot
+//        sleep(2000);
+//        robot_drive_point(0, 12, 0, 0.75); //right 1 foot
+//        sleep(2000);
+//        robot_drive_point(-12, -12, 0, 0.75); //return to starting position
+//        sleep(2000);
+//        robot_drive_point(6, 0, 90,  0.75); //forward while turning
+//        sleep(2000);
+//        robot_drive_point(0, -6, 90,  0.75); //strafe right while turning
+//        sleep(2000);
+//        robot_drive_point(12, -12, 180, 0.75); //return to starting position
+
+
+
+
+        }
+    }
 
 
     public void AutonInit(){
@@ -314,96 +403,5 @@ public class TestAuto extends LinearOpMode {
 
 
 
-    @Override
-    public void runOpMode() throws InterruptedException {
-        // 359 AUTON FUNCTIONS!!!! ೭੧(❛〜❛✿)੭೨
-        while (opModeInInit() ){
-            Robot Robot = new Robot(hardwareMap);
 
-            leftFront = hardwareMap.get(DcMotorEx.class,"leftFront");
-            leftBack = hardwareMap.get(DcMotorEx.class,"leftBack");
-            rightFront = hardwareMap.get(DcMotorEx.class,"rightFront");
-            rightBack = hardwareMap.get(DcMotorEx.class,"rightBack");
-
-
-            leftFront.setDirection(DcMotorSimple.Direction.REVERSE);
-            leftBack.setDirection(DcMotorSimple.Direction.REVERSE);
-
-            leftFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-            leftBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-            rightFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-            rightBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
-
-
-            imu = hardwareMap.get(BHI260IMU.class,"imu");
-            imu.resetYaw();
-
-            //Assumed that your encoders are plugged into specific motor ports
-            leftFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            leftBack.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            rightFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            rightBack.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-
-// TUNING GUIDE HERE
-// for tuning pid functions, run these programs and tune in this order:
-// (make sure to also tune exit conditions found in the while loop for each function)
-// if the robot has issues going too fast or not having enough low speed power, change the max power setting in each function (the last float)
-
-        //turn tuning, make sure robot ends up in same starting orientation
-        //tune turnKp, turnKi, turnKd (PID values for turning)
-
-//        robot_turn(90, 0.75);
-//        sleep(2000);
-//        robot_turn(45, 0.75);
-//        sleep(2000);
-//        robot_turn(-45, 0.75);
-//        sleep(2000);
-//        robot_turn(-90, 0.75);
-
-        //forward backwards tuning, making sure robot ends up 6 inches from starting position
-        //tune Kp_dist, Ki_dist, Kd_dist (PID values for forwards and backwards)
-        //tune Kp_heading, Ki_heading, Kd_heading (PID values for holding heading)
-        //tune encoder_tick_scale
-
-//        robot_move(12, 0.75);
-//        sleep(2000);
-//        robot_move(-12, 0.75); //should be at same starting position here
-//        sleep(5000);
-//        robot_move(12, 0.75);
-//        sleep(2000);
-//        robot_move(-6, 0.75); //should end up 6 inches forward from starting position
-//
-//        //strafe tuning, make sure robot ends up 6 inches from starting position
-//        //tune Kp_strafe, Ki_strafe, Kd_strafe (PID values for strafing)
-//        //tune Kp_fb, Ki_fb, Kd_fb (PID values for minimizing forward and backward error)
-//        //double check Kp_heading, Ki_heading, Kd_heading
-//        //double check encoder tick scale
-//
-//        robot_strafe(12, 0.75);
-//        sleep(2000);
-//        robot_strafe(-12, 0.75); //should be at same starting position here
-//        sleep(5000);
-//        robot_strafe(12, 0.75);
-//        sleep(2000);
-//        robot_strafe(-6, 0.75); //should end up 6 inches forward from starting position
-//
-//        //double check tuning and make final adjustments
-//        robot_drive_point(12, 0, 0, 0.75); //forward 1 foot
-//        sleep(2000);
-//        robot_drive_point(0, 12, 0, 0.75); //right 1 foot
-//        sleep(2000);
-//        robot_drive_point(-12, -12, 0, 0.75); //return to starting position
-//        sleep(2000);
-//        robot_drive_point(6, 0, 90,  0.75); //forward while turning
-//        sleep(2000);
-//        robot_drive_point(0, -6, 90,  0.75); //strafe right while turning
-//        sleep(2000);
-//        robot_drive_point(12, -12, 180, 0.75); //return to starting position
-
-
-
-
-        }
-    }
 }
