@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.auto;
 
+import static org.firstinspires.ftc.teamcode.hardware.Robot.imu;
+
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
@@ -7,6 +9,7 @@ import com.qualcomm.hardware.bosch.BHI260IMU;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import org.firstinspires.ftc.teamcode.hardware.Robot;
 
@@ -65,32 +68,6 @@ public class TestAuto extends LinearOpMode {
 
     private double previousErrorHeading = 0; 	//dont touch (ㆆ_ㆆ)
     private double integralHeading = 0; 			//dont touch (ㆆ_ㆆ)
-
-
-    Robot Robot = new Robot(hardwareMap);
-
-
-    public void AutonInit(){
-        leftFront = Robot.leftFront;
-        leftBack = Robot.leftBack;
-        rightFront = Robot.rightFront;
-        rightBack = Robot.rightBack;
-
-        leftFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        leftBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        rightFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        rightBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
-
-        the_imu = hardwareMap.get(BHI260IMU.class,"imu");
-        the_imu.resetYaw();
-
-        //Assumed that your encoders are plugged into specific motor ports
-        leftFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        leftBack.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        rightFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        rightBack.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-    }
 
 
     //motor control functions ----- ( ๑‾̀◡‾́)σ"
@@ -316,7 +293,33 @@ public class TestAuto extends LinearOpMode {
     public void runOpMode() throws InterruptedException {
         // 359 AUTON FUNCTIONS!!!! ೭੧(❛〜❛✿)੭೨
         while (opModeInInit() ){
-            AutonInit();
+            Robot Robot = new Robot(hardwareMap);
+
+            leftFront = hardwareMap.get(DcMotorEx.class,"leftFront");
+            leftBack = hardwareMap.get(DcMotorEx.class,"leftBack");
+            rightFront = hardwareMap.get(DcMotorEx.class,"rightFront");
+            rightBack = hardwareMap.get(DcMotorEx.class,"rightBack");
+
+
+            leftFront.setDirection(DcMotorSimple.Direction.REVERSE);
+            leftBack.setDirection(DcMotorSimple.Direction.REVERSE);
+
+            leftFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            leftBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            rightFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            rightBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+
+
+            imu = hardwareMap.get(BHI260IMU.class,"imu");
+            imu.resetYaw();
+
+            //Assumed that your encoders are plugged into specific motor ports
+            leftFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            leftBack.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            rightFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            rightBack.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
         }
         if (opModeIsActive()){
             robot_turn(90, 0.75);
