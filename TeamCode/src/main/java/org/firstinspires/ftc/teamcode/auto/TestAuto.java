@@ -105,13 +105,7 @@ public class TestAuto extends LinearOpMode {
             //turn tuning, make sure robot ends up in same starting orientation
             //tune turnKp, turnKi, turnKd (PID values for turning)
 
-//        robot_turn(90, 0.75);
-//        sleep(2000);
-//        robot_turn(45, 0.75);
-//        sleep(2000);
-//        robot_turn(-45, 0.75);
-//        sleep(2000);
-//        robot_turn(-90, 0.75);
+
 
             //forward backwards tuning, making sure robot ends up 6 inches from starting position
             //tune Kp_dist, Ki_dist, Kd_dist (PID values for forwards and backwards)
@@ -154,6 +148,18 @@ public class TestAuto extends LinearOpMode {
 //        robot_drive_point(12, -12, 180, 0.75); //return to starting position
 
 
+
+
+        }
+
+        if (isStarted()){
+            robot_turn(90, 0.75);
+            sleep(2000);
+            robot_turn(45, 0.75);
+            sleep(2000);
+            robot_turn(-45, 0.75);
+            sleep(2000);
+            robot_turn(-90, 0.75);
 
 
         }
