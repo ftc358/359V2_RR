@@ -67,14 +67,14 @@ public class TestAuto extends LinearOpMode {
     private double integralHeading = 0; 			//dont touch (ㆆ_ㆆ)
 
 
-    Robot Robot = new Robot(hardwareMap);
+    Robot the_Robot = new Robot(hardwareMap);
 
 
     public void AutonInit(){
-        leftFront = Robot.leftFront;
-        leftBack = Robot.leftBack;
-        rightFront = Robot.rightFront;
-        rightBack = Robot.rightBack;
+        leftFront = the_Robot.leftFront;
+        leftBack = the_Robot.leftBack;
+        rightFront = the_Robot.rightFront;
+        rightBack = the_Robot.rightBack;
 
         leftFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         leftBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -82,8 +82,8 @@ public class TestAuto extends LinearOpMode {
         rightBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
 
-        the_imu = hardwareMap.get(BHI260IMU.class,"imu");
-        the_imu.resetYaw();
+        //the_imu = the_Robot.imu;
+        //the_imu.resetYaw();
 
         //Assumed that your encoders are plugged into specific motor ports
         leftFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -115,9 +115,10 @@ public class TestAuto extends LinearOpMode {
     }
 
 
-    //functions start here ----- (っ＾▿＾)۶🍸🌟🍺٩(˘◡˘ )
+//    functions start here ----- (っ＾▿＾)۶🍸🌟🍺٩(˘◡˘ )
     public double getHeading(){
-       return  the_imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+       //return  the_imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+       return 30;
     }
 
     //private double previousError, integral;
@@ -315,7 +316,7 @@ public class TestAuto extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
         // 359 AUTON FUNCTIONS!!!! ೭੧(❛〜❛✿)੭೨
-        while (opModeInInit() ){
+        while (opModeInInit() && !opModeIsActive()){
             AutonInit();
         }
         if (opModeIsActive()){
