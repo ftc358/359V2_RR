@@ -161,9 +161,8 @@ public class TestAuto extends LinearOpMode {
     public double scalePIDOutput(double output, double min, double max) {
         double yup = output / PIDOUTPUTSCALE;
         double changeSign = 1;
-        if (yup < 0){
-            changeSign = -1;
-        }
+
+        if (yup < 0) changeSign = -1;
 
         if (Math.abs(yup) < min) {
             return min * changeSign;
