@@ -248,6 +248,7 @@ public class ILT_TeleOP extends ThreadOpMode{
                             halt2 = System.currentTimeMillis();
                         }
                         if ((System.currentTimeMillis()-halt2)>700) {
+                            intakeTransfer = 0;
                             intakeOut = false;
                             wristState = 2;
                             blocked = false;
@@ -259,7 +260,7 @@ public class ILT_TeleOP extends ThreadOpMode{
                         break;
                     case 7: //Drops here
                         wristState = 4;//drops
-                        intakeTransfer = 0;
+//                        intakeTransfer = 0;
 
                         break;
                 }
