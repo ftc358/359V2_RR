@@ -9,6 +9,8 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.IMU;
+
 import org.firstinspires.ftc.teamcode.hardware.Robot;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -18,13 +20,13 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 public class TestAuto extends LinearOpMode {
 
     // PID constants for turning
-    public static double turnKp = 0.45; //tuned 1/31
-    public static double turnKi = 0.01; //tuned 1/30
-    public static double turnKd = 0.06; //tuned 1/31
+    public static double turnKp = 0.6; //tuned 1/31
+    public static double turnKi = 0.025; //tuned 1/31
+    public static double turnKd = 0.0175; //tuned 1/31
     // PID constants for forward/back
-    public static double Kp_dist = 0.1; //tuned 1/30
-    public static double Ki_dist = 0.006; //tuned 1/30
-    public static double Kd_dist = 0.2; //tuned 1/30
+    public static double Kp_dist = 0.1; //tuned 2/1
+    public static double Ki_dist = 0.006; //tuned 2/1
+    public static double Kd_dist = 0.2; //tuned 2/1
     // PID constants for heading
     public static double Kp_heading = 0.07; //tuned 1/30
     public static double Ki_heading = 0.015; //tuned 1/30
@@ -84,19 +86,17 @@ public class TestAuto extends LinearOpMode {
             rightFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             rightBack.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         }
-
         // run auton here!! ٩(˘◡˘ )
         if (isStarted()) {
-
-            robot_turn(90);
-            sleep(1000);
-            robot_turn(-90);
-            sleep(1000);
-            robot_turn(45);
-            sleep(1000);
-            robot_turn(-45);
-
-            //far_red_left();
+             far_red_right();
+//            robot_turn(90);
+//            sleep(1000);
+//            robot_turn(-90);
+//            sleep(1000);
+//            robot_turn(45);
+//            sleep(1000);
+//            robot_turn(-45);
+//            sleep(1000);
         }
     }
 
@@ -115,21 +115,21 @@ public class TestAuto extends LinearOpMode {
         robot_move(-96, 0.5);
     }
     public void far_red_right(){
-        robot_move(-16, 0.5);
+        robot_move(-20, 0.5);
         sleep(150);
-        robot_turn(-45);
+        robot_turn(-60);
         sleep(150);
-        robot_move(-16, 0.5);
+        robot_move(-11, 0.5);
         sleep(150);
-        robot_move(16, 0.5);
+        robot_move(11, 0.5);
         sleep(150);
-        robot_turn(45);
+        robot_turn(60);
         sleep(150);
-        robot_move(-37 , 0.5);
+        robot_move(-30, 0.5);
         sleep(150);
-        robot_turn(-88);
+        robot_turn(-87);
         sleep(150);
-        robot_move(-86, 0.5);
+        robot_move(-84, 0.5);
     }
     public void far_red_left(){
         robot_move(-20, 0.5);
@@ -145,6 +145,36 @@ public class TestAuto extends LinearOpMode {
         robot_move(-34, 0.5);
         sleep(150);
         robot_turn(-86);
+        sleep(150);
+        robot_move(-86, 0.5);
+    }
+    public void far_blue_middle(){
+        robot_move(-30, 0.5);
+        sleep(150);
+        robot_move(6, 0.5);
+        sleep(150);
+        robot_strafe(12, 0.5);
+        sleep(150);
+        robot_move(-30, 0.5);
+        sleep(150);
+        robot_turn(92);
+        sleep(150);
+        robot_move(-96, 0.5);
+    }
+    public void far_blue_right(){
+        robot_move(-20, 0.5);
+        sleep(150);
+        robot_turn(60);
+        sleep(150);
+        robot_move(-11, 0.5);
+        sleep(150);
+        robot_move(11, 0.5);
+        sleep(150);
+        robot_turn(-60);
+        sleep(150);
+        robot_move(-30, 0.5);
+        sleep(150);
+        robot_turn(93);
         sleep(150);
         robot_move(-86, 0.5);
     }
@@ -184,14 +214,21 @@ public class TestAuto extends LinearOpMode {
 
     // functions start here ----- (っ＾▿＾)۶🍸🌟🍺٩(˘◡˘ )
     public void robot_turn(double degrees) {
+        imu.initialize();
+        sleep(10);
+        imu.resetYaw();
+        double temp = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
         double targetHeading = getHeading() + degrees;
         double error = targetHeading - getHeading();
+        double derivative = error - turn_previousError;
 
-        while (Math.abs(error) > 0.1) { // tolerance in degrees, adjust as needed
+        while (Math.abs(error) > 0.075 || derivative > 0.2) { // tolerance in degrees, adjust as needed
             //pid
             error = targetHeading - getHeading();                   // error
-            double derivative = error - turn_previousError;         // derivative
+            derivative = error - turn_previousError;         // derivative
             if (Math.abs(error) < 17.5) turn_integral += error;     // integral
+
+            telemetry.addData("derivative", derivative);
 
             //output and scale
             double output = (turnKp * error) + (turnKi * turn_integral) + (turnKd * derivative);
@@ -203,6 +240,7 @@ public class TestAuto extends LinearOpMode {
 
             //prep for next loop
             turn_previousError = error;
+            telemetry.update();
             sleep(20);
         }
         // Stop motors after turning
@@ -212,6 +250,8 @@ public class TestAuto extends LinearOpMode {
         //reset variables
         turn_previousError = 0;
         turn_integral = 0;
+
+        imu.resetYaw();
     }
 
     public void robot_move(double distance, double maxPower) {
@@ -226,12 +266,15 @@ public class TestAuto extends LinearOpMode {
         leftFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         rightFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        while (Math.abs(targetDistanceTicks - averageEncoder) > 186.253) { // Tolerance in ticks, adjust as needed
+        errorDist = targetDistanceTicks - averageEncoder;
+        double derivativeDist = errorDist - previousErrorDist;
+
+        while (Math.abs(targetDistanceTicks - averageEncoder) > 186.253 ) { // Tolerance in ticks, adjust as needed
             averageEncoder = ((leftFront.getCurrentPosition() + rightFront.getCurrentPosition()) / 2.0);
 
             // Distance PID
             errorDist = targetDistanceTicks - averageEncoder;                       // error
-            double derivativeDist = errorDist - previousErrorDist;                  // derivative
+            derivativeDist = errorDist - previousErrorDist;                  // derivative
             if (Math.abs(errorDist) < ticks_per_inch*2) integralDist += errorDist;  // integral
 
             // output and scale
@@ -241,12 +284,14 @@ public class TestAuto extends LinearOpMode {
             double leftPower = scalePIDOutput(outputDist, 0.05, maxPower);
             double rightPower = scalePIDOutput(outputDist, 0.05, maxPower);
 
+            telemetry.addData("derivative", derivativeDist);
+
             // set power to motors
             setLeftMotorPower(leftPower);
             setRightMotorPower(rightPower);
 
             previousErrorDist = errorDist;
-
+            telemetry.update();
             sleep(10);
         }
         // Stop motors
