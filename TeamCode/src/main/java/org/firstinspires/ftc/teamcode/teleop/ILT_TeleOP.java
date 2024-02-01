@@ -30,6 +30,7 @@ public class ILT_TeleOP extends ThreadOpMode{
     //Vars for Sensor Thread
     private double backDistanceIN;
     private boolean horExtRetract;
+    private boolean liftHome;
     //Vars for Pixel Thread
     private double claw1Pos = 0;
     private double claw2Pos = 0;
@@ -38,25 +39,37 @@ public class ILT_TeleOP extends ThreadOpMode{
     private double diffy2Pos = 0;
     private double intakeWrist = 0;
     private double intakePivot = 0;
+    private double airplanePos = 0;
+
     //Vars for Led Thread
     private RevBlinkinLedDriver.BlinkinPattern currentPattern = RevBlinkinLedDriver.BlinkinPattern.WHITE;
     private RevBlinkinLedDriver.BlinkinPattern previousPattern = RevBlinkinLedDriver.BlinkinPattern.WHITE;
 
+    //States for Switchcase:
     private int grabState = 0;
     private int wristState = 0;
     private int diffyState = 0;
+    private int ledState = 0;
+
 
     private int intakeTransfer = 0;
+
+
+    //Timers
     long halt0, halt1, halt2, halt3, halt4, halt5;
     private boolean intakeIn = false;
     private boolean intakeOut = false;
+
+
+
     private boolean liftBypass = false;
 
     private boolean retractVfy;
+    private boolean liftHomedVfy;
+
     private boolean detect;
 
     double In1Distance, In2Distance;
-    int ledState = 0;
     String color;
 
     boolean blocked = false;
@@ -73,12 +86,12 @@ public class ILT_TeleOP extends ThreadOpMode{
             @Override
             public void loop() {
                 //Mecanum Drive Code From https://www.youtube.com/watch?v=gnSW2QpkGXQ
+                //Trig Mecanum Drive is inherently superior. Precise Vectorization is unachievable with simple addition.
                 x = gamepad1.left_stick_x;
-                y = -gamepad1.left_stick_y;
-                turn = gamepad1.right_stick_x*turnScale;
+                y = -gamepad1.left_stick_y; //Inverts Y Axis Input because Because
+                turn = gamepad1.right_stick_x*turnScale; //Change turnscale 0.1-1 to restrict turning speed
                 theta = Math.atan2(y,x);
-                power = Math.hypot(x,y)*powerScale;
-
+                power = Math.hypot(x,y)*powerScale; //Change powerscale 0.1-1 to restrict max power
 
                 sin = Math.sin(theta-Math.PI/4);
                 cos = Math.cos(theta-Math.PI/4);
@@ -96,7 +109,7 @@ public class ILT_TeleOP extends ThreadOpMode{
                     rb  /= power + Math.abs(turn);
                 }
 
-                Robot.leftFront.setPower(lf);
+                Robot.leftFront.setPower(lf); //Setspowers on Motors from RoboClass
                 Robot.leftBack.setPower(lb);
                 Robot.rightFront.setPower(rf);
                 Robot.rightBack.setPower(rb);
@@ -106,21 +119,24 @@ public class ILT_TeleOP extends ThreadOpMode{
         TaskThread sensorThread = new TaskThread(new TaskThread.Actions() {
             @Override
             public void loop() {
-                backDistanceIN = Robot.backDistance.getDistance(DistanceUnit.INCH);
-                horExtRetract = Robot.horReset.isPressed();
+                backDistanceIN = Robot.backDistance.getDistance(DistanceUnit.INCH);//Distance Sensor from Back Board
+                horExtRetract = Robot.horReset.isPressed(); //Horizontal Slide Retraction State
+                liftHome = Robot.liftReset.isPressed();
+                //Add more sensor reads into this loop to achieve asynchronous state.
+                    // Jan 28: Add Maglim for Vert Slide?
 
-                In1Distance = Robot.In1Color.getDistance(DistanceUnit.INCH);
-                In2Distance = Robot.In2Color.getDistance(DistanceUnit.INCH);
 
+                In1Distance = Robot.In1Color.getDistance(DistanceUnit.INCH); //Left Intake Distance
+                In2Distance = Robot.In2Color.getDistance(DistanceUnit.INCH); //Right Intake Distance
 
-                if (detect){//Intake Pixel Detection
+                if (detect){//Intake Pixel Detection state is active
                 if (In1Distance <1.4 && In2Distance<1.4){
-                    ledState = 2;
+                    ledState = 2; //Both are in :)
                 }
                 else if (In1Distance < 1.4 || In2Distance <1.4){
-                    ledState = 1;
+                    ledState = 1; //One is in :|
                 }else {
-                    ledState = 0;
+                    ledState = 0; //None are in :(
                 }
                 }
 
@@ -130,7 +146,7 @@ public class ILT_TeleOP extends ThreadOpMode{
         TaskThread horExtThread = new TaskThread(new TaskThread.Actions() {
             @Override
             public void loop() {
-                //Horizontal Extension Triggering
+                //Horizontal Extension Triggering: A Mess
                 if (!retractVfy && diffyState == 2){
                     horExtPwr = -1;
                 }
@@ -158,23 +174,29 @@ public class ILT_TeleOP extends ThreadOpMode{
                     horExtPwr = 0;
                 }
 
-                //lift Trigerring
-                if (liftBypass){
-                    liftPwr = 0.7;
-                }
-                else if (currentGamepad2.right_trigger>0.1){
+
+
+
+
+
+
+
+
+                //Lift Activation
+                if (currentGamepad2.right_trigger>0.1){ //Goes up by GP2 Right Trigger, Variably.
                     liftPwr = currentGamepad2.right_trigger;
-                }else if (currentGamepad2.right_bumper){
+                    liftHomedVfy = false;
+                }else if (currentGamepad2.right_bumper){ //Goes Down by GP2 Right Bumper
                     liftPwr = -0.6;
-                }else{
-                    liftPwr = 0.1;
+                }else if (liftHomedVfy || liftHome){
+                    liftHomedVfy = true;
+                    liftPwr = 0;//Homed, no hold.
+                }else {
+                    liftPwr = 0.1;//Idle Hold Power
                 }
 
-
-
-
+                //Intake Activation
                 if ((currentGamepad2.left_trigger>0 || intakeIn)){
-
                     intakePwr = 1;
                 }else if ((currentGamepad2.dpad_left || intakeOut)){
                     intakePwr = -1;
