@@ -18,9 +18,9 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 public class TestAuto extends LinearOpMode {
 
     // PID constants for turning
-    public static double turnKp = 0.45; //tuned 1/30
-    public static double turnKi = 0.0125; //tuned 1/30
-    public static double turnKd = 0.05; //tuned 1/29
+    public static double turnKp = 0.45; //tuned 1/31
+    public static double turnKi = 0.01; //tuned 1/30
+    public static double turnKd = 0.06; //tuned 1/31
     // PID constants for forward/back
     public static double Kp_dist = 0.1; //tuned 1/30
     public static double Ki_dist = 0.006; //tuned 1/30
@@ -87,7 +87,16 @@ public class TestAuto extends LinearOpMode {
 
         // run auton here!! ٩(˘◡˘ )
         if (isStarted()) {
-            far_red_left();
+
+            robot_turn(90);
+            sleep(1000);
+            robot_turn(-90);
+            sleep(1000);
+            robot_turn(45);
+            sleep(1000);
+            robot_turn(-45);
+
+            //far_red_left();
         }
     }
 
@@ -129,13 +138,13 @@ public class TestAuto extends LinearOpMode {
         sleep(150);
         robot_move(-12, 0.5);
         sleep(150);
-        robot_move(12, 0.5);
+        robot_move(13, 0.5);
         sleep(150);
-        robot_turn(-43);
+        robot_turn(-45);
         sleep(150);
-        robot_move(-32, 0.5);
+        robot_move(-34, 0.5);
         sleep(150);
-        robot_turn(-87);
+        robot_turn(-86);
         sleep(150);
         robot_move(-86, 0.5);
     }
@@ -194,7 +203,7 @@ public class TestAuto extends LinearOpMode {
 
             //prep for next loop
             turn_previousError = error;
-            sleep(10);
+            sleep(20);
         }
         // Stop motors after turning
         setLeftMotorPower(0);
@@ -303,7 +312,7 @@ public class TestAuto extends LinearOpMode {
             previousErrorStrafe = errorStrafe;
             previousErrorHeading = errorHeading;
 
-            sleep(10);
+            sleep(15);
 
         }
         // Stop motors
