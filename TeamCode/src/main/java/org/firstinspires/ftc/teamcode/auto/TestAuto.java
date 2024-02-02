@@ -1,4 +1,5 @@
 package org.firstinspires.ftc.teamcode.auto;
+//package org.firstinspires.ftc.robotcontroller.external.samples;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
@@ -14,6 +15,18 @@ import com.qualcomm.robotcore.hardware.IMU;
 import org.firstinspires.ftc.teamcode.hardware.Robot;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+
+import org.firstinspires.ftc.robotcore.external.hardware.camera.BuiltinCameraDirection;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.ExposureControl;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.GainControl;
+import org.firstinspires.ftc.vision.VisionPortal;
+import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
+import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
+
+import java.util.List;
+import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
 
 @Config
 @Autonomous
@@ -59,6 +72,14 @@ public class TestAuto extends LinearOpMode {
     private double previousErrorHeading = 0;    //don't touch (ㆆ_ㆆ)
     private double integralHeading = 0;         //don't touch (ㆆ_ㆆ)
 
+    //
+    private static final boolean USE_WEBCAM = true;  // Set true to use a webcam, or false for a phone camera
+    private static final int DESIRED_TAG_ID = -1;     // Choose the tag you want to approach or set to -1 for ANY tag.
+    private VisionPortal visionPortal;               // Used to manage the video source.
+    private AprilTagProcessor aprilTag;              // Used for managing the AprilTag detection process.
+    private AprilTagDetection desiredTag = null;     // Used to hold the data for a detected AprilTag
+    public boolean targetFound = false;    // Set to true when an AprilTag target is detected
+
     // 359 AUTON!!!! ೭੧(❛〜❛✿)੭೨
     @Override
     public void runOpMode() throws InterruptedException {
@@ -85,22 +106,31 @@ public class TestAuto extends LinearOpMode {
             leftBack.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             rightFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             rightBack.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+
+            initAprilTag();
+            if (USE_WEBCAM)
+                setManualExposure(6, 250);  // Use low exposure time to reduce motion blur
         }
+
         // run auton here!! ٩(˘◡˘ )
         if (isStarted()) {
-             far_red_right();
-//            robot_turn(90);
-//            sleep(1000);
-//            robot_turn(-90);
-//            sleep(1000);
-//            robot_turn(45);
-//            sleep(1000);
-//            robot_turn(-45);
-//            sleep(1000);
+            far_red_right();
         }
     }
 
     // auton routes
+
+    public void turn_test(){
+        robot_turn(90);
+        sleep(1000);
+        robot_turn(-90);
+        sleep(1000);
+        robot_turn(45);
+        sleep(1000);
+        robot_turn(-45);
+        sleep(1000);
+    }
     public void far_red_middle(){
         robot_move(-30, 0.5);
         sleep(150);
@@ -212,7 +242,7 @@ public class TestAuto extends LinearOpMode {
         }
     }
 
-    // functions start here ----- (っ＾▿＾)۶🍸🌟🍺٩(˘◡˘ )
+    // move functions ----- (っ＾▿＾)۶🍸🌟🍺٩(˘◡˘ )
     public void robot_turn(double degrees) {
         imu.initialize();
         sleep(10);
@@ -372,5 +402,111 @@ public class TestAuto extends LinearOpMode {
         integralStrafe = 0;
         previousErrorHeading = 0;
         integralHeading = 0;
+    }
+
+    //apriltag stuff --- --- --- --- --- --- --- --- --- --- ---
+    private void initAprilTag() {
+        // Create the AprilTag processor by using a builder.
+        aprilTag = new AprilTagProcessor.Builder().build();
+
+        // Adjust Image Decimation to trade-off detection-range for detection-rate.
+        // eg: Some typical detection data using a Logitech C920 WebCam
+        // Decimation = 1 ..  Detect 2" Tag from 10 feet away at 10 Frames per second
+        // Decimation = 2 ..  Detect 2" Tag from 6  feet away at 22 Frames per second
+        // Decimation = 3 ..  Detect 2" Tag from 4  feet away at 30 Frames Per Second
+        // Decimation = 3 ..  Detect 5" Tag from 10 feet away at 30 Frames Per Second
+        // Note: Decimation can be changed on-the-fly to adapt during a match.
+        aprilTag.setDecimation(2);
+
+        // Create the vision portal by using a builder.
+        if (USE_WEBCAM) {
+            visionPortal = new VisionPortal.Builder()
+                    .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
+                    .addProcessor(aprilTag)
+                    .build();
+        } else {
+            visionPortal = new VisionPortal.Builder()
+                    .setCamera(BuiltinCameraDirection.BACK)
+                    .addProcessor(aprilTag)
+                    .build();
+        }
+    }
+
+    private void    setManualExposure(int exposureMS, int gain) {
+        // Wait for the camera to be open, then use the controls
+
+        if (visionPortal == null) {
+            return;
+        }
+
+        // Make sure camera is streaming before we try to set the exposure controls
+        if (visionPortal.getCameraState() != VisionPortal.CameraState.STREAMING) {
+            telemetry.addData("Camera", "Waiting");
+            telemetry.update();
+            while (!isStopRequested() && (visionPortal.getCameraState() != VisionPortal.CameraState.STREAMING)) {
+                sleep(20);
+            }
+            telemetry.addData("Camera", "Ready");
+            telemetry.update();
+        }
+
+        // Set camera controls unless we are stopping.
+        if (!isStopRequested())
+        {
+            ExposureControl exposureControl = visionPortal.getCameraControl(ExposureControl.class);
+            if (exposureControl.getMode() != ExposureControl.Mode.Manual) {
+                exposureControl.setMode(ExposureControl.Mode.Manual);
+                sleep(50);
+            }
+            exposureControl.setExposure((long)exposureMS, TimeUnit.MILLISECONDS);
+            sleep(20);
+            GainControl gainControl = visionPortal.getCameraControl(GainControl.class);
+            gainControl.setGain(gain);
+            sleep(20);
+        }
+    }
+
+    public List<Double> lookyTag(){
+        targetFound = false;
+        desiredTag  = null;
+        double maxloop = 1000;
+        double currentLoop = 0;
+
+        while (currentLoop < maxloop) {
+
+            // Step through the list of detected tags and look for a matching tag
+            List<AprilTagDetection> currentDetections = aprilTag.getDetections();
+            for (AprilTagDetection detection : currentDetections) {
+                // Look to see if we have size info on this tag.
+                if (detection.metadata != null) {
+                    //  Check to see if we want to track towards this tag.
+                    if ((DESIRED_TAG_ID < 0) || (detection.id == DESIRED_TAG_ID)) {
+                        // Yes, we want to use this tag.
+                        targetFound = true;
+                        desiredTag = detection;
+                        break;  // don't look any further.
+                    } else {
+                        // This tag is in the library, but we do not want to track it right now.
+                        telemetry.addData("Skipping", "Tag ID %d is not desired", detection.id);
+                    }
+                } else {
+                    // This tag is NOT in the library, so we don't have enough information to track to it.
+                    telemetry.addData("Unknown", "Tag ID %d is not in TagLibrary", detection.id);
+                }
+                telemetry.update();
+            }
+            if (targetFound == true) break;
+            currentLoop += 1;
+        }
+
+        double  rangeError      = desiredTag.ftcPose.range;
+        double  headingError    = desiredTag.ftcPose.bearing;
+        double  yawError        = desiredTag.ftcPose.yaw;
+
+        List<Double> aprilValues = new ArrayList<>();
+        aprilValues.add(rangeError);
+        aprilValues.add(headingError);
+        aprilValues.add(yawError);
+        return aprilValues;
     }
 }
