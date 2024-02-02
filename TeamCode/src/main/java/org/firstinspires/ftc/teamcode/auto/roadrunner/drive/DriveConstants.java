@@ -47,7 +47,7 @@ public class DriveConstants {
     //https://www.gobilda.com/96mm-mecanum-wheel-set-70a-durometer-bearing-supported-rollers/
     public static double WHEEL_RADIUS = 1.8898; //96mm GBD in
     public static double GEAR_RATIO = 1; // output (wheel) speed / input (motor) speed
-    public static double TRACK_WIDTH = 12.70; // in
+    public static double TRACK_WIDTH = 12.84; // in   ///Updated 2/2/24
 
     /*
      * These are the feedforward parameters used to model the drive motor behavior. If you are using
@@ -55,9 +55,9 @@ public class DriveConstants {
      * motor encoders or have elected not to use them for velocity control, these values should be
      * empirically tuned.
      */
-    public static double kV = 0.0176;
-    public static double kA = 0.0025;
-    public static double kStatic = 0.07082;
+    public static double kV = 0.0169;
+    public static double kA = 0.0023;
+    public static double kStatic = 0.07;
 
     /*
      * These values are used to generate the trajectories for you robot. To ensure proper operation,
