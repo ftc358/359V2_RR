@@ -4,6 +4,8 @@ package org.firstinspires.ftc.teamcode.auto;
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
+
+
 import com.qualcomm.hardware.bosch.BHI260IMU;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -109,13 +111,13 @@ public class TestAuto extends LinearOpMode {
 
 
             initAprilTag();
-            if (USE_WEBCAM)
-                setManualExposure(6, 250);  // Use low exposure time to reduce motion blur
+            //if (USE_WEBCAM)
+            //    setManualExposure(6, 250);  // Use low exposure time to reduce motion blur
         }
 
         // run auton here!! ٩(˘◡˘ )
         if (isStarted()) {
-            far_red_right();
+            turn_test();
         }
     }
 
@@ -123,13 +125,21 @@ public class TestAuto extends LinearOpMode {
 
     public void turn_test(){
         robot_turn(90);
-        sleep(1000);
+        sleep(250);
         robot_turn(-90);
-        sleep(1000);
+        sleep(250);
+        robot_turn(-90);
+        sleep(250);
+        robot_turn(90);
+        sleep(250);
         robot_turn(45);
-        sleep(1000);
+        sleep(250);
         robot_turn(-45);
-        sleep(1000);
+        sleep(250);
+        robot_turn(-45);
+        sleep(250);
+        robot_turn(45);
+        sleep(250);
     }
     public void far_red_middle(){
         robot_move(-30, 0.5);
@@ -252,17 +262,27 @@ public class TestAuto extends LinearOpMode {
         double error = targetHeading - getHeading();
         double derivative = error - turn_previousError;
 
-        while (Math.abs(error) > 0.075 || derivative > 0.2) { // tolerance in degrees, adjust as needed
-            //pid
+        while (Math.abs(error) > 0.1 || derivative > 0.2) { // tolerance in degrees, adjust as needed
+            //while (Math.abs(error) > 0.075 || derivative > 0.2) { // tolerance in degrees, adjust as needed
+
+                //pid
             error = targetHeading - getHeading();                   // error
             derivative = error - turn_previousError;         // derivative
             if (Math.abs(error) < 17.5) turn_integral += error;     // integral
 
             telemetry.addData("derivative", derivative);
+            telemetry.addData("error", error);
+            telemetry.addData("turn_integral", turn_integral);
+            telemetry.addData("target", targetHeading);
+
+
+
 
             //output and scale
             double output = (turnKp * error) + (turnKi * turn_integral) + (turnKd * derivative);
+            telemetry.addData("output before scale", output);
             output = scalePIDOutput(output, 0.075, 1000);
+            telemetry.addData("output after scale", output);
 
             //set power to motors
             setLeftMotorPower(-output);
@@ -287,20 +307,27 @@ public class TestAuto extends LinearOpMode {
     public void robot_move(double distance, double maxPower) {
 
         double targetDistanceTicks = distance * ticks_per_inch /2;
-        double averageEncoder = (leftFront.getCurrentPosition() + rightFront.getCurrentPosition()) / (2.0);
+        //double averageEncoder = (leftFront.getCurrentPosition() + rightFront.getCurrentPosition()) / (2.0);
+        double averageEncoder = (leftFront.getCurrentPosition() + leftBack.getCurrentPosition()*(-1)) / (2.0);
+
         double errorDist;
+        double gostraightL;
+        double gostraightR;
 
         //reset encoders
-        leftFront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rightFront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftFront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);  //this is right side encoder!!!
+        //rightFront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftBack.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER); //this is left side encoder!!!
         leftFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        rightFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        //rightFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        leftBack.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         errorDist = targetDistanceTicks - averageEncoder;
         double derivativeDist = errorDist - previousErrorDist;
 
-        while (Math.abs(targetDistanceTicks - averageEncoder) > 186.253 ) { // Tolerance in ticks, adjust as needed
-            averageEncoder = ((leftFront.getCurrentPosition() + rightFront.getCurrentPosition()) / 2.0);
+        while (Math.abs(targetDistanceTicks - averageEncoder) > 186.253 ) { // 186.235~0.1 inch, Tolerance in ticks, adjust as needed
+            //averageEncoder = ((leftFront.getCurrentPosition() + rightFront.getCurrentPosition()) / 2.0);
+            averageEncoder = ((leftFront.getCurrentPosition() + leftBack.getCurrentPosition()*(-1)) / 2.0);
 
             // Distance PID
             errorDist = targetDistanceTicks - averageEncoder;                       // error
@@ -310,11 +337,32 @@ public class TestAuto extends LinearOpMode {
             // output and scale
             double outputDist = (Kp_dist * errorDist) + (Ki_dist * integralDist) + (Kd_dist * derivativeDist);
             outputDist = outputDist / encoder_tick_scale;
-
-            double leftPower = scalePIDOutput(outputDist, 0.05, maxPower);
-            double rightPower = scalePIDOutput(outputDist, 0.05, maxPower);
+            if((leftFront.getCurrentPosition() - leftBack.getCurrentPosition()*(-1))>90) //right faster
+            {
+                gostraightL=0.01;
+                gostraightR=-0.01;
+            }
+            else if((leftFront.getCurrentPosition() - leftBack.getCurrentPosition()*(-1))<-90) //right slower
+            {
+                gostraightL=-0.01;
+                gostraightR=0.01;
+            }
+            else
+            {
+                gostraightL=0;
+                gostraightR=0;
+            }
+            double leftPower = scalePIDOutput(outputDist , 0.05, maxPower)+gostraightL;
+            double rightPower = scalePIDOutput(outputDist , 0.05, maxPower)+gostraightR;
 
             telemetry.addData("derivative", derivativeDist);
+            telemetry.addData("targetDistanceTicks", targetDistanceTicks);
+            telemetry.addData("errorDist", errorDist);
+            telemetry.addData("outputDist", outputDist);
+            telemetry.addData("left F encoder", leftFront.getCurrentPosition());
+            telemetry.addData("right F encoder", rightFront.getCurrentPosition());
+            telemetry.addData("left B encoder", leftBack.getCurrentPosition());
+            telemetry.addData("right B encoder", rightBack.getCurrentPosition());
 
             // set power to motors
             setLeftMotorPower(leftPower);
@@ -329,10 +377,12 @@ public class TestAuto extends LinearOpMode {
         setRightMotorPower(0);
 
         //reset encoders
-        leftFront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rightFront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftFront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);  //this is right side encoder!!!
+        //rightFront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftBack.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER); //this is left side encoder!!!
         leftFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        rightFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        //rightFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        leftBack.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         //reset variables
         previousErrorDist = 0;
@@ -419,7 +469,7 @@ public class TestAuto extends LinearOpMode {
         aprilTag.setDecimation(2);
 
         // Create the vision portal by using a builder.
-        if (USE_WEBCAM) {
+        /*if (USE_WEBCAM) {
             visionPortal = new VisionPortal.Builder()
                     .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
                     .addProcessor(aprilTag)
@@ -429,7 +479,7 @@ public class TestAuto extends LinearOpMode {
                     .setCamera(BuiltinCameraDirection.BACK)
                     .addProcessor(aprilTag)
                     .build();
-        }
+        }*/
     }
 
     private void    setManualExposure(int exposureMS, int gain) {

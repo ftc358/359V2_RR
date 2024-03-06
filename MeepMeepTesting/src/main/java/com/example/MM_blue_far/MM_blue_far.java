@@ -1,4 +1,4 @@
-package com.example.meepmeeptesting;
+package com.example.MM_blue_far;
 
 
 import com.acmerobotics.roadrunner.geometry.Pose2d;
@@ -9,26 +9,18 @@ import com.noahbres.meepmeep.roadrunner.DefaultBotBuilder;
 import com.noahbres.meepmeep.roadrunner.entity.RoadRunnerBotEntity;
 
 enum Route{
-    RED_CLOSE_1,
-    RED_CLOSE_2,
-    RED_CLOSE_3,
+    RED_CLOSE,
 
-    RED_FAR_1,
-    RED_FAR_2,
-    RED_FAR_3,
+    RED_FAR,
 
-    BLUE_CLOSE_1,
-    BLUE_CLOSE_2,
-    BLUE_CLOSE_3,
+    BLUE_CLOSE,
 
-    BLUE_FAR_1,
-    BLUE_FAR_2,
-    BLUE_FAR_3,
+    BLUE_FAR,
 
 }
 
-public class MeepMeepTesting {
-    public static final Route ROUTE = Route.RED_CLOSE_1;
+public class MM_blue_far {
+    public static final Route ROUTE = Route.BLUE_FAR;
     public static final double DELAY = 0.5;
     public static final double MAXVEL = 38;
     public static final double MAXACCEL = 25;

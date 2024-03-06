@@ -1,4 +1,6 @@
-package org.firstinspires.ftc.teamcode.auto.roadrunner.drive.opmode;
+package org.firstinspires.ftc.teamcode.auto;
+
+//package org.firstinspires.ftc.teamcode.auto.roadrunner.drive.opmode;
 
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
@@ -12,8 +14,7 @@ import org.firstinspires.ftc.teamcode.auto.roadrunner.drive.SampleMecanumDrive;
  * This is an example of a more complex path to really test the tuning.
  */
 @Autonomous(group = "drive")
-public class SplineTest extends LinearOpMode {
-    public static double Final_angle = 3;
+public class RR359 extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
@@ -30,17 +31,17 @@ public class SplineTest extends LinearOpMode {
         //Blue left pixel drop (54, 31)
         //Blue right pixel drop (54, 41)
 
-        Pose2d blue_far_pose = new Pose2d(-35.5, -62.75, Math.toRadians(-90));  //36, 64
+        Pose2d blue_far_pose = new Pose2d(-36, -64, Math.toRadians(-90));
         drive.setPoseEstimate(blue_far_pose);
 
         //1st trajectory, move backword to put the pixel on the center line
         Trajectory traj1 = drive.trajectoryBuilder(blue_far_pose)
-                .back(30.5) //31
+                .back(31)
                 .build();
 
         //2nd trajectory, strafe to leave the pixel
         Trajectory traj2 = drive.trajectoryBuilder(traj1.end())
-                .strafeTo(new Vector2d(-48,-48)) //48,48
+                .strafeTo(new Vector2d(-48,-48))
                 //.forward(11)
                 .build();
 
@@ -49,7 +50,7 @@ public class SplineTest extends LinearOpMode {
         Trajectory traj3 = drive.trajectoryBuilder(traj2.end(),true)
                 .splineTo(new Vector2d(-36, -12), Math.toRadians(0))
                 .lineTo(new Vector2d(20,-12))
-                .splineTo(new Vector2d(50, -34.5), Math.toRadians(Final_angle)) //54,36
+                .splineTo(new Vector2d(54, -36), Math.toRadians(0))
                 .build();
 
         waitForStart();
@@ -69,12 +70,13 @@ public class SplineTest extends LinearOpMode {
         Trajectory traj4 = drive.trajectoryBuilder(traj3.end().plus(new Pose2d(0,0,Math.toRadians(0))),false)
                 .splineTo(new Vector2d(20, -12), Math.toRadians(180))   //because the direction was reversed in traj3, now is 180 degree
                 //.back(60)
-                .lineToLinearHeading(new Pose2d(-49, -12, Math.toRadians(180)))
+                .lineToLinearHeading(new Pose2d(-48, -12, Math.toRadians(180)))
                 .build();
         drive.followTrajectory(traj4);
 
-        //give intake 1 second
+        //give intake 1 second, add intake code here
         sleep(1000);
+
         //intake pose change (in_x, in_y, in_angle)
         //traj4.end().plus(new Pose2d(0, 0, Math.toRadians(0))), false)
 
@@ -82,21 +84,10 @@ public class SplineTest extends LinearOpMode {
         //start from traj4 end pose plus intake pose changes
         Trajectory traj5 = drive.trajectoryBuilder(traj4.end().plus(new Pose2d(0,0,Math.toRadians(0))),true)//reversed again!!!
                 .lineToLinearHeading(new Pose2d(20, -12, Math.toRadians(180)))
-                .splineTo(new Vector2d(49, -33.5), Math.toRadians(Final_angle))//I do not now why this has to be 0 degree
+                .splineTo(new Vector2d(54, -36), Math.toRadians(0))//I do not now why this has to be 0 degree
                 .build();
 
         //move to board
         drive.followTrajectory(traj5);
-
-        //Trajectory traj = drive.trajectoryBuilder(new Pose2d())
-        //        .splineTo(new Vector2d(30, 30), 0)
-        //        .build();
-//        drive.followTrajectory(traj);
-//        sleep(300);
-//        drive.followTrajectory(
-//                drive.trajectoryBuilder(traj.end(), true)
-//                        .splineTo(new Vector2d(0, 0), Math.toRadians(180))
-//                        .build()
-//        );
     }
 }

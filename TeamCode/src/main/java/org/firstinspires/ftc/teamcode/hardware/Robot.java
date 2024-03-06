@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.hardware;
 
 import com.qualcomm.hardware.bosch.BHI260IMU;
+import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
 import com.qualcomm.hardware.rev.RevColorSensorV3;
@@ -12,6 +13,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
@@ -39,11 +41,11 @@ public class Robot {
     public static Servo intakeWrist;
     public static Servo intakePivot1;
     public static Servo intakePivot2;
-    public Servo plane; //Servo Motors
+    public static Servo plane; //Servo Motors
     public RevBlinkinLedDriver led;
 
     ////Sensors:
-    public BHI260IMU imu;//IMU on Control Hub
+    public IMU imu;//IMU on Control Hub
     public AnalogInput diffy1Enc, diffy2Enc, intakePivot1Enc, intakePivot2Enc; //Axon Encoder Readouts
     public ColorRangeSensor In1Color, In2Color; //Color Sensors for Intake
     public DistanceSensor frontDistance;
@@ -64,6 +66,27 @@ public class Robot {
         exh.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
 
         //Fetch and Configure Drive Motors
+        /*
+        Control Hub:
+        M0: leftFront
+        M1  leftBack
+        M2  rightBack
+        M3  rightFront
+
+        S0: diffy1
+        S1: diffy2
+        S2:
+        S3: intakeWrist
+        S4: intakePivot1
+        S5: intakePivot2
+
+        D0: outtakeTouch
+        I2CB0: imu BHI
+        I2CB2: backDistance
+
+
+         */
+
         leftFront = hardwareMap.get(DcMotorEx.class,"leftFront");
         leftBack = hardwareMap.get(DcMotorEx.class,"leftBack");
         rightFront = hardwareMap.get(DcMotorEx.class,"rightFront");
@@ -107,6 +130,9 @@ public class Robot {
         intakePivot2 = hardwareMap.get(Servo.class,"intakePivot2");
         intakePivot1.setDirection(Servo.Direction.REVERSE);
 
+        plane = hardwareMap.get(Servo.class,"plane");
+        plane.setDirection(Servo.Direction.FORWARD);
+
 
 
 
@@ -116,12 +142,12 @@ public class Robot {
         led = hardwareMap.get(RevBlinkinLedDriver.class,"led");
 
         //Fetch Sensors
-        imu = hardwareMap.get(BHI260IMU.class,"imu");
+        imu = hardwareMap.get(IMU.class,"imu");
         In1Color = hardwareMap.get(RevColorSensorV3.class,"In1Color");
         In2Color = hardwareMap.get(RevColorSensorV3.class,"In2Color");
-        backDistance = hardwareMap.get(DistanceSensor.class,"backDistance");
-        outtakeTouch = hardwareMap.get(TouchSensor.class,"outtakeTouch");
         horReset = hardwareMap.get(TouchSensor.class,"horReset");
+
+        frontDistance = hardwareMap.get(DistanceSensor.class,"frontDistance");
 
     }
 }

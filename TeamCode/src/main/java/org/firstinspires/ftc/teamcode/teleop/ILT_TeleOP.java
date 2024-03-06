@@ -62,14 +62,13 @@ public class ILT_TeleOP extends ThreadOpMode{
 
 
 
-    private boolean liftBypass = false;
 
     private boolean retractVfy;
     private boolean liftHomedVfy;
 
     private boolean detect;
 
-    double In1Distance, In2Distance;
+    double In1Distance, In2Distance, frontDistance;
     String color;
 
     boolean blocked = false;
@@ -119,25 +118,24 @@ public class ILT_TeleOP extends ThreadOpMode{
         TaskThread sensorThread = new TaskThread(new TaskThread.Actions() {
             @Override
             public void loop() {
-                backDistanceIN = Robot.backDistance.getDistance(DistanceUnit.INCH);//Distance Sensor from Back Board
                 horExtRetract = Robot.horReset.isPressed(); //Horizontal Slide Retraction State
-                liftHome = Robot.liftReset.isPressed();
                 //Add more sensor reads into this loop to achieve asynchronous state.
-                    // Jan 28: Add Maglim for Vert Slide?
 
 
                 In1Distance = Robot.In1Color.getDistance(DistanceUnit.INCH); //Left Intake Distance
                 In2Distance = Robot.In2Color.getDistance(DistanceUnit.INCH); //Right Intake Distance
 
+                frontDistance = Robot.frontDistance.getDistance(DistanceUnit.INCH);//Distance Sensor Read
+
                 if (detect){//Intake Pixel Detection state is active
-                if (In1Distance <1.4 && In2Distance<1.4){
-                    ledState = 2; //Both are in :)
-                }
-                else if (In1Distance < 1.4 || In2Distance <1.4){
-                    ledState = 1; //One is in :|
-                }else {
-                    ledState = 0; //None are in :(
-                }
+                    if (In1Distance <1.4 && In2Distance<1.4){
+                        ledState = 2; //Both are in :)
+                    }
+                    else if (In1Distance < 1.4 || In2Distance <1.4){
+                        ledState = 1; //One is in :|
+                    }else {
+                        ledState = 0; //None are in :(
+                    }
                 }
 
             }
@@ -219,7 +217,7 @@ public class ILT_TeleOP extends ThreadOpMode{
                     case 0: //Home position for Driving
                         blocked = false;
                         if (gamepad2.x){ledState = 6;
-                         wristState = 3;
+                            wristState = 3;
                         }else {
                             ledState = 5;
                             wristState = 0;
@@ -427,6 +425,16 @@ public class ILT_TeleOP extends ThreadOpMode{
             Robot.climb.setPower(-gamepad2.right_stick_y);
         }
 
+        if (gamepad2.dpad_right){
+            Robot.plane.setPosition(0.1);
+        }else {
+            //addplane
+            Robot.plane.setPosition(0);
+        }
+
+
+        telemetry.addData("Front Distance INCHES",frontDistance);
+        telemetry.addData("planeServoPos",airplanePos);
 
 
         telemetry.addData("diffyState",diffyState);
