@@ -21,13 +21,12 @@ public class BlueDetectionLeft implements VisionProcessor {
     Telemetry telemetry;
     Mat mat = new Mat();
 
-    Scalar lowBlueHSV = new Scalar(90, 50, 50);
-    Scalar highBlueHSV = new Scalar(130, 255, 255);
+    Scalar lowBlueHSV = new Scalar(100, 60, 60);
+    Scalar highBlueHSV = new Scalar(140, 255, 255);
 
-//    Scalar lower_red1 = new Scalar(0,50,50);
-//    Scalar upper_red1 = new Scalar(10,255,255);
-//    Scalar lower_red2 = new Scalar(160,50,50);
-//    Scalar upper_red2 = new Scalar(180,255,255);
+//    Scalar lowBlueHSV = new Scalar(90, 50, 50);
+//    Scalar highBlueHSV = new Scalar(130, 255, 255);
+
 
     static int readout = 0;
 
@@ -42,14 +41,14 @@ public class BlueDetectionLeft implements VisionProcessor {
 
 
     static final Rect LEFT_ROI = new Rect(
-            new Point(0, 120),
-            new Point(100, 320));
+            new Point(0, 150),
+            new Point(150, 300));
     static final Rect CENTER_ROI = new Rect(
-            new Point(140,150),
-            new Point(140+300,150+150));
+            new Point(220,130),
+            new Point(220+190,170+100));
     static final Rect RIGHT_ROI = new Rect(
-            new Point(500, 120),
-            new Point(640, 320));
+            new Point(450, 150),
+            new Point(600, 300));
 
     Scalar No = new Scalar(255, 0, 0);
     Scalar Yes = new Scalar(0, 255, 0);

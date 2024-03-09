@@ -20,6 +20,7 @@ import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.acmerobotics.roadrunner.trajectory.Trajectory;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.ColorRangeSensor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.Servo;
@@ -27,9 +28,11 @@ import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.ExposureControl;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.GainControl;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.auto.roadrunner.drive.DriveConstants;
 import org.firstinspires.ftc.teamcode.auto.roadrunner.drive.SampleMecanumDrive;
 import org.firstinspires.ftc.teamcode.hardware.Robot;
+import org.firstinspires.ftc.teamcode.vision.BlueDetectionLeft;
 import org.firstinspires.ftc.teamcode.vision.RedDetectionRight;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
@@ -57,12 +60,13 @@ public class RR_Blue_far_slow extends LinearOpMode {
     public IMU imu = null;
     public Servo claw1, claw2, diffy1, diffy2, wrist1, wrist2, intakePivot1, intakePivot2, intakeWrist;
     public DcMotorEx intake, horExt, lift;
+    public ColorRangeSensor In1Color, In2Color;
 
     //hardware - vision
     private static final int DESIRED_TAG_ID = -1;     // Choose the tag you want to approach or set to -1 for ANY tag.
     private VisionPortal visionPortal;               // Used to manage the video source.
 
-    private RedDetectionRight redDetectionRight;
+    private BlueDetectionLeft blueDetectionLeft;
 
     private AprilTagProcessor aprilTag;              // Used for managing the AprilTag detection process.
     private AprilTagDetection desiredTag = null;     // Used to hold the data for a detected AprilTag
@@ -96,8 +100,11 @@ public class RR_Blue_far_slow extends LinearOpMode {
             intakePivot1 = robot.intakePivot1;
             intakePivot2 = robot.intakePivot2;
 
-            //initAprilTag();
-            //setManualExposure(6, 250);
+            In1Color = robot.In1Color;
+            In2Color = robot.In2Color;
+
+            initAprilTag();
+            setManualExposure(6, 250);
 
             //hardware init
             diffyHome();
@@ -109,18 +116,18 @@ public class RR_Blue_far_slow extends LinearOpMode {
             intakeWrist.setPosition(intakeWristDriving);
         }
         while (opModeInInit()) {
-            side = RedDetectionRight.getReadout(); //change this to variable "target"
+            side = BlueDetectionLeft.getReadout(); //change this to variable "target"
             horExt.setPower(-0.1);  //hold the intake extension tight
 
             telemetry.addData("Side", side);
-            telemetry.addData("LeftVal", RedDetectionRight.leftValue);
-            telemetry.addData("CenterVal", RedDetectionRight.centerValue);
-            telemetry.addData("RightVal", RedDetectionRight.rightValue);
+            telemetry.addData("LeftVal", BlueDetectionLeft.leftValue);
+            telemetry.addData("CenterVal", BlueDetectionLeft.centerValue);
+            telemetry.addData("RightVal", BlueDetectionLeft.rightValue);
             telemetry.update();
         }
         //if not camera installed, comment out these two lines!!!
-        //visionPortal.setProcessorEnabled(redDetectionRight, false);
-        //visionPortal.setProcessorEnabled(aprilTag, true);
+        visionPortal.setProcessorEnabled(blueDetectionLeft, false);
+        visionPortal.setProcessorEnabled(aprilTag, true);
 
         Pose2d Blue_far_pose = new Pose2d(-35.5, 62.75, Math.toRadians(90));
         Pose2d End_2nd = new Pose2d(0, 0, Math.toRadians(0));
@@ -167,6 +174,11 @@ public class RR_Blue_far_slow extends LinearOpMode {
         //if (isStopRequested()) return;
 
         if (isStarted()) {
+            telemetry.addData("ColSen1",In1Color.getDistance(DistanceUnit.INCH));
+            telemetry.addData("ColSen2",In2Color.getDistance(DistanceUnit.INCH));
+            telemetry.update();
+            sleep(2000);
+
             intakePivot1.setPosition(intakePivotIntake);
             intakePivot2.setPosition(intakePivotIntake);
             intakeWrist.setPosition(0.2);
@@ -176,14 +188,15 @@ public class RR_Blue_far_slow extends LinearOpMode {
             horExt.setPower(0);
             intake.setPower(1);
             sleep(300);
-            intakeWrist.setPosition(0.2);
-            sleep(100);
-            intakeWrist.setPosition(0.19);
-            sleep(120);
-            intakeWrist.setPosition(0.18);
-            sleep(120);
-            intakeWrist.setPosition(0.17);
-            sleep(1000);
+            long startTime = System.currentTimeMillis();
+            double scale = 0.01;
+            while (((In1Color.getDistance(DistanceUnit.INCH)>1.4)&&(In2Color.getDistance(DistanceUnit.INCH)>1.4)) ){
+                intakeWrist.setPosition(0.2-scale);
+                scale += 0.01;
+                sleep(100);
+            }
+            intake.setPower(0);
+            sleep(500);
             horExt.setPower(-0.4);
             intakePivot1.setPosition(intakePivotDriving);
             intakePivot2.setPosition(intakePivotDriving);
@@ -259,8 +272,7 @@ public class RR_Blue_far_slow extends LinearOpMode {
         // Decimation = 3 ..  Detect 5" Tag from 10 feet away at 30 Frames Per Second
         // Note: Decimation can be changed on-the-fly to adapt during a match.
         aprilTag.setDecimation(3);
-//        blueDetectionLeft = new BlueDetectionLeft(telemetry);INIT THIS FOR RED SIDE AND COMMENT OUT BLUE
-        redDetectionRight = new RedDetectionRight(telemetry);
+        blueDetectionLeft = new BlueDetectionLeft(telemetry);//INIT THIS FOR RED SIDE AND COMMENT OUT BLUE
 
         /* From Config File for 640 by 360:
         * size="640 360"
@@ -277,11 +289,11 @@ public class RR_Blue_far_slow extends LinearOpMode {
                 .setCameraResolution(new Size(640, 360))
                 .addProcessor(aprilTag)
                 //.addProcessor(blueDetectionLeft
-                .addProcessor(redDetectionRight)
+                .addProcessor(blueDetectionLeft)
                 .build();
 
         visionPortal.setProcessorEnabled(aprilTag, false);
-        visionPortal.setProcessorEnabled(redDetectionRight, true);
+        visionPortal.setProcessorEnabled(blueDetectionLeft, true);
 
 
     }

@@ -44,7 +44,7 @@ public class MeepMeepTesting {
     public static double end_pose2_y_adj = 0; //the second drop y adjust (positive - move left)
     public static double intake_pose_x = -53; //the traj4 end pose x for intake
     public static double intake_pose_y = 11; //the traj4 end pose x for intake //12
-    public static double end_pose_Y_i = 35.5; //end pose Y initial value
+    public static double end_pose_Y_i = 35.5; //end pose Y initial value,
     public static double end_pose_Y = 0; //end pose Y - this is the value used in the traj
     public static double Third_turn_x = 0; //the 3rd traj start pose x - this is the value used in the traj
     public static void main(String[] args) throws Exception{
@@ -80,19 +80,23 @@ public class MeepMeepTesting {
                 .followTrajectorySequence(drive ->
                         drive.trajectorySequenceBuilder(Blue_far_pose)
                                 .setReversed(true) //first trajectory
-                                .splineTo(new Vector2d(-30, 36), Math.toRadians(-5))
-                                .setReversed(false) //second trajectory
-                                .lineToSplineHeading(new Pose2d(-42, 36, Math.toRadians(100)))
+                                .lineToSplineHeading(new Pose2d(-40 , 36, Math.toRadians(45)))                                .setReversed(false) //second trajectory
+                                .lineToSplineHeading(new Pose2d(-36, 48, Math.toRadians(100)))
                                 .setReversed(true) //third trajectory
                                 .splineTo(new Vector2d(Third_turn_x, 12), Math.toRadians(0)) //-36,-12
                                 .lineTo(new Vector2d(20, 12))
                                 .splineTo(new Vector2d(50, end_pose_Y + end_pose1_y_adj), Math.toRadians(Final_angle)) //50,-34.5
-                                .setReversed(false) //fourth trajectory
+                                .waitSeconds(2.5)
+                               /* .setReversed(false) //fourth trajectory
                                 .splineTo(new Vector2d(20, 11), Math.toRadians(180))
                                 .lineToLinearHeading(new Pose2d(intake_pose_x, intake_pose_y, Math.toRadians(180)))
+                                .waitSeconds(2.5)
                                 .setReversed(true) //fifth trajectory
                                 .lineToLinearHeading(new Pose2d(20, 11, Math.toRadians(180)))
                                 .splineTo(new Vector2d(49, end_pose_Y + end_pose2_y_adj), Math.toRadians(Final_angle))
+                                .waitSeconds(2.5)*/
+                                .setReversed(false) //last move
+                                .strafeTo(new Vector2d(48, 24))
                                 .build()
                                 /*drive.trajectorySequenceBuilder(new Pose2d(12, -60, Math.toRadians(270)))
                                 .back(18)

@@ -17,12 +17,19 @@ import static org.firstinspires.ftc.teamcode.hardware.RobotConstants.intakeWrist
 
 import android.util.Size;
 
+import androidx.annotation.NonNull;
+
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
+import com.acmerobotics.roadrunner.profile.VelocityConstraint;
 import com.acmerobotics.roadrunner.trajectory.Trajectory;
+import com.acmerobotics.roadrunner.trajectory.constraints.AngularVelocityConstraint;
+import com.acmerobotics.roadrunner.trajectory.constraints.MecanumVelocityConstraint;
+import com.acmerobotics.roadrunner.trajectory.constraints.TrajectoryVelocityConstraint;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.ColorRangeSensor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.Servo;
@@ -30,13 +37,21 @@ import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.ExposureControl;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.GainControl;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.teamcode.auto.roadrunner.drive.DriveConstants;
 import org.firstinspires.ftc.teamcode.auto.roadrunner.drive.SampleMecanumDrive;
+import org.firstinspires.ftc.teamcode.auto.roadrunner.trajectorysequence.TrajectorySequence;
 import org.firstinspires.ftc.teamcode.hardware.Robot;
-import org.firstinspires.ftc.teamcode.vision.RedDetectionRight;
+import org.firstinspires.ftc.teamcode.vision.BlueDetectionLeft;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
-
+import com.acmerobotics.roadrunner.trajectory.constraints.TrajectoryVelocityConstraint;
+import org.firstinspires.ftc.teamcode.auto.roadrunner.drive.SampleMecanumDrive;
+import com.acmerobotics.roadrunner.trajectory.constraints.MinVelocityConstraint;
+import com.acmerobotics.roadrunner.trajectory.constraints.TrajectoryAccelerationConstraint;
+import com.acmerobotics.roadrunner.trajectory.constraints.TankVelocityConstraint;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -63,7 +78,9 @@ public class RR_Blue_far_2RUN extends LinearOpMode {
     private static final int DESIRED_TAG_ID = -1;     // Choose the tag you want to approach or set to -1 for ANY tag.
     private VisionPortal visionPortal;               // Used to manage the video source.
 
-    private RedDetectionRight redDetectionRight;
+    public ColorRangeSensor In1Color, In2Color;
+
+    private BlueDetectionLeft blueDetectionLeft;
 
     private AprilTagProcessor aprilTag;              // Used for managing the AprilTag detection process.
     private AprilTagDetection desiredTag = null;     // Used to hold the data for a detected AprilTag
@@ -71,7 +88,7 @@ public class RR_Blue_far_2RUN extends LinearOpMode {
 
     public int side = 1;  //original auto code for side detection
     public static int target = 3; //for test purpose only !!!, target is 1,2, or 3.
-
+    double show_vel = 10;
     @Override
     public void runOpMode() throws InterruptedException {
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
@@ -97,8 +114,11 @@ public class RR_Blue_far_2RUN extends LinearOpMode {
             intakePivot1 = robot.intakePivot1;
             intakePivot2 = robot.intakePivot2;
 
-            //initAprilTag();
-            //setManualExposure(6, 250);
+            In1Color = robot.In1Color;
+            In2Color = robot.In2Color;
+
+            initAprilTag();
+            setManualExposure(6, 250);
 
             //hardware init
             diffyHome();
@@ -110,18 +130,20 @@ public class RR_Blue_far_2RUN extends LinearOpMode {
             intakeWrist.setPosition(intakeWristDriving);
         }
         while (opModeInInit()) {
-            side = RedDetectionRight.getReadout(); //change this to variable "target"
+            side = BlueDetectionLeft.getReadout(); //change this to variable "target"
             telemetry.addData("Side", side);
-            telemetry.addData("LeftVal", RedDetectionRight.leftValue);
-            telemetry.addData("CenterVal", RedDetectionRight.centerValue);
-            telemetry.addData("RightVal", RedDetectionRight.rightValue);
+            telemetry.addData("LeftVal", BlueDetectionLeft.leftValue);
+            telemetry.addData("CenterVal", BlueDetectionLeft.centerValue);
+            telemetry.addData("RightVal", BlueDetectionLeft.rightValue);
+            telemetry.addData("ColSen1",In1Color.getDistance(DistanceUnit.INCH));
+            telemetry.addData("ColSen2",In2Color.getDistance(DistanceUnit.INCH));
             telemetry.update();
         }
         horExt.setPower(0.1);  //hold the intake extension tight
         lift.setPower(0.1);
         //if not camera installed, comment out these two lines!!!
-        //visionPortal.setProcessorEnabled(redDetectionRight, false);
-        //visionPortal.setProcessorEnabled(aprilTag, true);
+        visionPortal.setProcessorEnabled(blueDetectionLeft, false);
+        visionPortal.setProcessorEnabled(aprilTag, true);
 
         Pose2d Blue_far_pose = new Pose2d(-35.5, 62.75, Math.toRadians(90));
         Pose2d End_2nd = new Pose2d(0, 0, Math.toRadians(0));
@@ -168,7 +190,7 @@ public class RR_Blue_far_2RUN extends LinearOpMode {
         if (isStarted()) {
             horExt.setPower(-0.15);
 
-            switch (target) {
+            switch (side) {
                 case 1: //left
                     drive.followTrajectory(traj1L);
                     drive.followTrajectory(traj2L);
@@ -191,6 +213,12 @@ public class RR_Blue_far_2RUN extends LinearOpMode {
                     end_pose_Y = end_pose_Y_i - 6;
                     Third_turn_x = Third_turn_x_i + 10;
                     break;
+                default:
+                    drive.followTrajectory(traj1M);
+                    drive.followTrajectory(traj2M);
+                    End_2nd = traj2M.end();
+                    end_pose_Y = end_pose_Y_i;
+                    Third_turn_x = Third_turn_x_i;
             }
 
             //3nd trajectory, spline move around the pixel (back turn -- reserved: true!!!)
@@ -210,8 +238,42 @@ public class RR_Blue_far_2RUN extends LinearOpMode {
 
             //drop pose may be changed to (drop_x, drop_y, drop_angle)
             //traj3.end().plus(new Pose2d(0, 0, Math.toRadians(0))), false) to get the new position for traj4 as start pose
-            //4th trajectory back to pick up 2nd round pixel
             //start from traj3 end pose plus drop pose changes
+
+            /*
+            //use Trajectory Sequence to avoid path continuity exception
+            TrajectorySequence blue2ndround = drive.trajectorySequenceBuilder(traj3.end())
+                    .setReversed(false) //fourth trajectory
+                    .splineTo(new Vector2d(20, 11), Math.toRadians(180))   //20,12  //because the direction was reversed in traj3, now is 180 degree
+                    .lineToLinearHeading(new Pose2d(intake_pose_x+4, intake_pose_y, Math.toRadians(180)))
+                    .UNSTABLE_addDisplacementMarkerOffset(20, () -> {
+                        intakeoutforstack();
+                    })
+                    .setReversed(false) //slow (half speed) run to stack
+                    //.setVelConstraint(velConstraint)
+                    .lineToLinearHeading(new Pose2d(intake_pose_x-2, intake_pose_y, Math.toRadians(180)))
+                    .UNSTABLE_addDisplacementMarkerOffset(3,()-> {//start intake motor after robot move 5 inches
+                        topStackIntakev2();
+                    })
+                    .setReversed(true) //fifth trajectory
+                    .resetConstraints()
+                    .lineToLinearHeading(new Pose2d(20, 11, Math.toRadians(180)))  //20,12
+                    .UNSTABLE_addDisplacementMarkerOffset(5,()->{//start intake motor after robot move 5 inches
+                        shortintake();
+                    })
+                    .UNSTABLE_addDisplacementMarkerOffset(20,()->{//start transfer after robot move 20 inches
+                        intakeTransfer();
+                    })
+                    .splineTo(new Vector2d(49, end_pose_Y + end_pose2_y_adj), Math.toRadians(Final_angle))//I do not now why this has to be 0 degree, 49,-33.5
+                    .UNSTABLE_addDisplacementMarkerOffset(0,()-> {//start transfer after robot move 20 inches
+                        dropOnBoard();
+                    })
+                    .setReversed(false) //last, move the robot away from the board 4 inch
+                    .forward(4)
+                    .build();
+            drive.followTrajectorySequence(blue2ndround);*/
+
+
             Trajectory traj4 = drive.trajectoryBuilder(traj3.end().plus(new Pose2d(0, 0, Math.toRadians(0))), false)
                     .splineTo(new Vector2d(20, 11), Math.toRadians(180))   //20,12  //because the direction was reversed in traj3, now is 180 degree
                     //.addDisplacementMarker(10,()->{//dropper move back to home position after the robot move back 10 inch
@@ -221,8 +283,9 @@ public class RR_Blue_far_2RUN extends LinearOpMode {
                         //intakeOut();
                 //R})
                     .lineToLinearHeading(new Pose2d(intake_pose_x, intake_pose_y, Math.toRadians(180)))
-                    //.lineToLinearHeading(new Pose2d(-53, 9, Math.toRadians(179)))
+                    //.addDisplacementMarker(40,()->{})//intake out after the robot move back 40 inch
                     .build();
+
             drive.followTrajectory(traj4);
 
             //give intake 2 second, add intake code here!!!!!
@@ -238,6 +301,7 @@ public class RR_Blue_far_2RUN extends LinearOpMode {
             //start from traj4 end pose plus intake pose changes
             Trajectory traj5 = drive.trajectoryBuilder(traj4.end().plus(new Pose2d(0, 0, Math.toRadians(0))), true)//reversed again!!!
                     .lineToLinearHeading(new Pose2d(20, 11, Math.toRadians(180)))  //20,12
+                    //.addDisplacementMarker(5,()->{})//start intake after robot move 5 inches
                     .addDisplacementMarker(5,()->{//start transfer after robot move 10 inches
                         intakeTransfer();
                     })
@@ -250,8 +314,9 @@ public class RR_Blue_far_2RUN extends LinearOpMode {
             //move to board
             drive.followTrajectory(traj5);
             //drop the pixels
-
             dropOnBoard();
+            //leave
+
 
             Trajectory endtraj = drive.trajectoryBuilder(traj5.end(), false)
                     .forward(4)
@@ -259,6 +324,66 @@ public class RR_Blue_far_2RUN extends LinearOpMode {
             drive.followTrajectory(endtraj);
         }
     }
+
+    public void intakeoutforstack() {
+        intakePivot1.setPosition(0.15);
+        intakePivot2.setPosition(0.15);
+        intakeWrist.setPosition(0.2);
+        sleep(500);
+        horExt.setPower(0.2);
+        sleep(200);
+    }
+
+    public void shortintake(){
+        intake.setPower(1);
+        sleep(500);
+        intakePivot1.setPosition(intakePivotDriving);
+        intakePivot2.setPosition(intakePivotDriving);
+        intakeWrist.setPosition(intakeWristDriving);
+    }
+
+    public void topStackIntakev2(){
+        int topStackIntakeTimer = 0;
+        horExt.setPower(0);
+        while (((In1Color.getDistance(DistanceUnit.INCH)>1.4)&&(In2Color.getDistance(DistanceUnit.INCH)>1.4)) ) {
+            intake.setPower(1);
+            if (topStackIntakeTimer<80) {
+                topStackIntakeTimer+=20;
+                sleep(20);
+            } else if(topStackIntakeTimer<180){
+                intakePivot1.setPosition(0.12);
+                intakePivot2.setPosition(0.12);
+                topStackIntakeTimer+=20;
+                sleep(20);
+            } else if(topStackIntakeTimer<300){
+                intakePivot1.setPosition(0.12);
+                intakePivot2.setPosition(0.12);
+                intakeWrist.setPosition(0.15);
+                topStackIntakeTimer+=20;
+                sleep(20);
+            } else if(topStackIntakeTimer<440){
+                intakePivot1.setPosition(0.08);
+                intakePivot2.setPosition(0.08);
+                topStackIntakeTimer+=20;
+                sleep(20);
+            } else if(topStackIntakeTimer<600){
+                intakePivot1.setPosition(0.06);
+                intakePivot2.setPosition(0.06);
+                topStackIntakeTimer+=20;
+                sleep(20);
+            } else if(topStackIntakeTimer<1600){
+                intakePivot1.setPosition(0.04);
+                intakePivot2.setPosition(0.04);
+                topStackIntakeTimer+=20;
+                sleep(20);
+            } else{
+                break;
+            }
+            intake.setPower(0);
+            horExt.setPower(-0.4);
+            sleep(300);
+        }
+    }   //2.1s
 
     public void topStackIntake(){
         intakePivot1.setPosition(0.15);
@@ -321,7 +446,7 @@ public class RR_Blue_far_2RUN extends LinearOpMode {
         sleep(250);
         lift.setPower(0.0);
         diffyHome();
-    }
+    }   //1.5s
 
     public void intakeTransfer(){
         wrist1.setPosition(0);
@@ -339,7 +464,7 @@ public class RR_Blue_far_2RUN extends LinearOpMode {
         wrist1.setPosition(0);
         wrist2.setPosition(0);
         grab();
-    }
+    }   //1.5s
 
     public void grab() {
         claw1.setPosition(clawGrabPos);
@@ -363,7 +488,7 @@ public class RR_Blue_far_2RUN extends LinearOpMode {
         sleep(500);
         intakeWrist.setPosition(intakeWristIntake);
         sleep(500);
-    }
+    }   //1s
     public void intake_Transfer() {
         lift.setPower(0);
         sleep(200);
@@ -374,7 +499,7 @@ public class RR_Blue_far_2RUN extends LinearOpMode {
         sleep(300);
         intake.setPower(-1);
         sleep(1000);
-    }
+    }   //1.8s
 
     //The following three functions are from Original Code for AprilTag
     private void initAprilTag() {
@@ -391,8 +516,7 @@ public class RR_Blue_far_2RUN extends LinearOpMode {
         // Decimation = 3 ..  Detect 5" Tag from 10 feet away at 30 Frames Per Second
         // Note: Decimation can be changed on-the-fly to adapt during a match.
         aprilTag.setDecimation(3);
-//        blueDetectionLeft = new BlueDetectionLeft(telemetry);INIT THIS FOR RED SIDE AND COMMENT OUT BLUE
-        redDetectionRight = new RedDetectionRight(telemetry);
+        blueDetectionLeft = new BlueDetectionLeft(telemetry);//INIT THIS FOR RED SIDE AND COMMENT OUT BLUE
 
         /* From Config File for 640 by 360:
         * size="640 360"
@@ -408,12 +532,12 @@ public class RR_Blue_far_2RUN extends LinearOpMode {
                 .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
                 .setCameraResolution(new Size(640, 360))
                 .addProcessor(aprilTag)
-                //.addProcessor(blueDetectionLeft
-                .addProcessor(redDetectionRight)
+                .addProcessor(blueDetectionLeft)
+                //.addProcessor(redDetectionRight)
                 .build();
 
         visionPortal.setProcessorEnabled(aprilTag, false);
-        visionPortal.setProcessorEnabled(redDetectionRight, true);
+        visionPortal.setProcessorEnabled(blueDetectionLeft, true);
 
 
     }
